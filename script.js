@@ -34,10 +34,14 @@ function printReport() {
 
 function sync() {
     const name = document.getElementById('inName').value;
-    document.getElementById('outCoverName').innerText = name;
+    const coverTitle = document.getElementById('outCoverName');
+    if (coverTitle) coverTitle.innerText = `${name} - SOC Daily Report`;
 
     const docControlTitle = document.getElementById('docControlTitle');
-    if (docControlTitle) docControlTitle.innerText = `SOC Daily Report for ${name}.`;
+    if (docControlTitle) docControlTitle.innerText = `${name} - SOC Daily Report`;
+
+    const epsLabel = document.getElementById('epsCustomerLabel');
+    if (epsLabel) epsLabel.innerText = name;
 
     // Check for BluPine customer
     const isBluPine = name.trim().toLowerCase().includes('blupine');
@@ -71,10 +75,17 @@ function sync() {
     });
 }
 
-function loadImg(e, id) {
+function loadImg(e, type) {
     if (!e.target.files.length) return;
     const r = new FileReader();
-    r.onload = () => { document.getElementById(id).src = r.result; };
+    r.onload = () => {
+        if (type === 'snsLogo') {
+            document.querySelectorAll('.sns-logo-img').forEach(img => img.src = r.result);
+        } else {
+            const el = document.getElementById('custLogo');
+            if (el) el.src = r.result;
+        }
+    };
     r.readAsDataURL(e.target.files[0]);
 }
 
@@ -89,7 +100,7 @@ function escapeHtmlCell(val) {
 
 /** Drag resize between column headers (Potential Incidents tables only). */
 const INCIDENT_COL_MIN_PX = 40;
-const DEFAULT_INCIDENT_COL_FRACS = [0.05, 0.11, 0.10, 0.14, 0.34, 0.10, 0.16];
+const DEFAULT_INCIDENT_COL_FRACS = [0.06, 0.12, 0.12, 0.55, 0.15];
 
 function getIncidentDataTables() {
     return document.querySelectorAll('.incident-table-wrap table.incident-data-table');
@@ -99,8 +110,8 @@ function ensureIncidentColgroup(table) {
     let cg = table.querySelector('colgroup');
     if (!cg) {
         cg = document.createElement('colgroup');
-        const cls = ['inc-col-sn', 'inc-col-ticket', 'inc-col-sev', 'inc-col-title', 'inc-col-obs', 'inc-col-status', 'inc-col-tfp'];
-        for (let i = 0; i < 7; i++) {
+        const cls = ['inc-col-sn', 'inc-col-ticket', 'inc-col-sev', 'inc-col-title', 'inc-col-status'];
+        for (let i = 0; i < 5; i++) {
             const col = document.createElement('col');
             col.className = cls[i];
             cg.appendChild(col);
@@ -120,9 +131,9 @@ function incidentTableInnerWidth(table) {
 
 function readIncidentColWidthsPx(table) {
     const cols = table.querySelectorAll('colgroup col');
-    if (cols.length !== 7) return null;
+    if (cols.length !== 5) return null;
     const out = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 5; i++) {
         const px = parseFloat(cols[i].style.width);
         if (!px || px <= 0) return null;
         out.push(px);
@@ -134,7 +145,7 @@ function applyIncidentColWidthsPx(widthsPx) {
     getIncidentDataTables().forEach(function (table) {
         ensureIncidentColgroup(table);
         const cols = table.querySelectorAll('colgroup col');
-        if (cols.length !== 7) return;
+        if (cols.length !== 5) return;
         widthsPx.forEach(function (px, i) {
             cols[i].style.width = Math.max(INCIDENT_COL_MIN_PX, Math.round(px)) + 'px';
         });
@@ -144,7 +155,7 @@ function applyIncidentColWidthsPx(widthsPx) {
 function normalizeIncidentColWidths(table) {
     ensureIncidentColgroup(table);
     const cols = table.querySelectorAll('colgroup col');
-    if (cols.length !== 7) return;
+    if (cols.length !== 5) return;
     const w = table.clientWidth || table.getBoundingClientRect().width;
     if (!w || w < 80) return;
     let widths = Array.from(cols).map(function (c) {
@@ -188,7 +199,7 @@ function initIncidentColumnResize(table) {
     const theadRow = table.querySelector('thead tr');
     if (!theadRow) return;
     const ths = theadRow.querySelectorAll('th');
-    if (ths.length !== 7) return;
+    if (ths.length !== 5) return;
 
     ensureIncidentColgroup(table);
     const firstInited = Array.from(getIncidentDataTables()).find(function (t) {
@@ -210,7 +221,7 @@ function initIncidentColumnResize(table) {
     table.dataset.incidentResizeInit = '1';
 
     ths.forEach(function (th, idx) {
-        if (idx === 6) return;
+        if (idx === 4) return;
         if (th.querySelector('.incident-col-resize-handle')) return;
 
         const handle = document.createElement('span');
@@ -298,9 +309,7 @@ function addRow() {
         + '<td contenteditable="true">#</td>'
         + '<td contenteditable="true">High</td>'
         + '<td contenteditable="true">New Incident</td>'
-        + '<td contenteditable="true">Enter observation...</td>'
         + '<td contenteditable="true">Open</td>'
-        + '<td contenteditable="true">TBD</td>'
         + '</tr>';
     lastTbody.insertAdjacentHTML('beforeend', row);
     managePagination();
@@ -496,9 +505,9 @@ function getIncidentNoteReservePx() {
     let hasClosed = false;
     let rowsExist = false;
     document.querySelectorAll('.incident-tbody tr').forEach(function (tr) {
-        if (tr.cells.length > 5) {
+        if (tr.cells.length > 3) {
             rowsExist = true;
-            const status = tr.cells[5].innerText.trim().toLowerCase();
+            const status = tr.cells[4].innerText.trim().toLowerCase();
             if (status.includes('open')) hasOpen = true;
             if (status.includes('close')) hasClosed = true;
         }
@@ -548,6 +557,7 @@ function createIncidentNoteOverflowPage(afterPage) {
     const page = document.createElement('div');
     page.className = 'page incident-page-extra incident-note-overflow-page';
     page.innerHTML = ''
+        + `<img class="sns-logo-img page-sns-logo" src="${(document.querySelector('.page-sns-logo') || {src:''}).src}" alt="">`
         + '<div class="incident-note-overflow-inner" style="flex-grow:1;display:flex;flex-direction:column;padding:12px 0 88px;min-height:0;box-sizing:border-box;">'
         + '</div>'
         + '<div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num"></span></div>'
@@ -645,7 +655,8 @@ function managePagination() {
                             overflowPage = document.createElement('div');
                             overflowPage.className = 'page';
                             overflowPage.id = 'p7';
-                            overflowPage.innerHTML = '<div id="p7Container" style="flex-grow:0;display:flex;flex-direction:column;position:relative;padding-top:10px;"></div>'
+                            overflowPage.innerHTML = `<img class="sns-logo-img page-sns-logo" src="${(document.querySelector('.page-sns-logo') || {src:''}).src}" alt="">`
+                                + '<div id="p7Container" style="flex-grow:0;display:flex;flex-direction:column;position:relative;padding-top:10px;"></div>'
                                 + '<div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num"></span></div>'
                                 + '<div class="footer-strip"><div class="strip-blue"></div><div class="strip-pink"></div></div>';
                             currentPage.parentNode.insertBefore(overflowPage, currentPage.nextSibling);
@@ -767,40 +778,33 @@ function createNewIncidentPage(afterPage) {
     const newPage = document.createElement('div');
     newPage.className = 'page incident-page-extra';
     newPage.innerHTML = `
-        <div style="flex-grow: 0; display: flex; flex-direction: column; position: relative;">
-            <h3 class="section-header incident-section-heading incident-section-heading--continued">${headingNum}. Potential Incidents (Continued)</h3>
-            <div class="box-border incident-table-wrap" style="padding:0; margin-bottom: 40px; border: 2px solid #000; flex-grow: 0; min-height: fit-content; height: auto;">
+        <img class="sns-logo-img page-sns-logo" src="${(document.querySelector('.page-sns-logo') || {src:''}).src}" alt="">
+        <div style="flex-grow:0;display:flex;flex-direction:column;position:relative;">
+            <h3 class="section-header incident-section-heading incident-section-heading--continued" style="margin-top:10px;">${headingNum}. Potential Incidents (Continued)</h3>
+            <div class="box-border incident-table-wrap" style="padding:0;margin-bottom:35px;border:1px solid #ccc;flex-grow:0;min-height:fit-content;height:auto;">
                 <table class="data-table incident-data-table">
                     <colgroup>
                         <col class="inc-col-sn">
                         <col class="inc-col-ticket">
                         <col class="inc-col-sev">
                         <col class="inc-col-title">
-                        <col class="inc-col-obs">
                         <col class="inc-col-status">
-                        <col class="inc-col-tfp">
                     </colgroup>
                     <thead>
                         <tr>
-                            <th>S.N</th>
+                            <th>S.No</th>
                             <th>Ticket No</th>
                             <th>Severity</th>
                             <th>Incident Title</th>
-                            <th>Observation &amp; Recommendation</th>
                             <th>Status</th>
-                            <th>True/False<br>Positive</th>
                         </tr>
                     </thead>
-                    <tbody class="incident-tbody">
-                    </tbody>
+                    <tbody class="incident-tbody"></tbody>
                 </table>
             </div>
         </div>
         <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num"></span></div>
-        <div class="footer-strip">
-            <div class="strip-blue"></div>
-            <div class="strip-pink"></div>
-        </div>
+        <div class="footer-strip"><div class="strip-blue"></div><div class="strip-pink"></div></div>
     `;
     afterPage.parentNode.insertBefore(newPage, afterPage.nextSibling);
     // Register the new tbody with the ResizeObserver so it triggers pagination on resize
@@ -824,9 +828,9 @@ function updateIncidentNote() {
 
     // Scan ALL incident tables (this naturally excludes the BluPine table which uses .blupine-tbody)
     document.querySelectorAll('.incident-tbody tr').forEach(tr => {
-        if (tr.cells.length > 5) {
+        if (tr.cells.length > 3) {
             rowsExist = true;
-            let status = tr.cells[5].innerText.trim().toLowerCase();
+            let status = tr.cells[4].innerText.trim().toLowerCase();
             if (status.includes('open')) hasOpen = true;
             if (status.includes('close')) hasClosed = true;
         }
@@ -880,12 +884,6 @@ function adjustLayoutForBluPine() {
     const p6 = document.getElementById('p6');
 
     if (!sec5 || !container || !p6) return;
-
-    const fpHalfContainer = document.getElementById('fpHalfContainer');
-    if (fpHalfContainer) {
-        fpHalfContainer.style.height = 'auto';
-        fpHalfContainer.style.flex = '0 0 auto';
-    }
 
     // Remove any stale p7 — managePagination will create overflow pages as needed
     const p7 = document.getElementById('p7');
@@ -988,16 +986,115 @@ function updatePageNumbers() {
         }
     });
 }
+function draw3DEPSChart(canvasEl, value, custName, ratio) {
+    ratio = ratio || (window.devicePixelRatio || 1);
+    const wrap = canvasEl.parentElement;
+    const cssW = (wrap && wrap.clientWidth > 10) ? wrap.clientWidth : 380;
+    const cssH = (wrap && wrap.clientHeight > 10) ? wrap.clientHeight : 200;
+
+    canvasEl.width = Math.round(cssW * ratio);
+    canvasEl.height = Math.round(cssH * ratio);
+    canvasEl.style.width = cssW + 'px';
+    canvasEl.style.height = cssH + 'px';
+
+    const ctx = canvasEl.getContext('2d');
+    ctx.save();
+    ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+    ctx.scale(ratio, ratio);
+
+    const W = cssW, H = cssH;
+    const padL = 48, padR = 20, padT = 30, padB = 10;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+
+    // Chart title (customer name)
+    ctx.font = 'bold 13px Calibri, Arial, sans-serif';
+    ctx.fillStyle = '#222';
+    ctx.textAlign = 'center';
+    ctx.fillText(custName, padL + chartW / 2, 20);
+
+    // Y scale
+    const numVal = parseFloat(value) || 0;
+    const rawMax = Math.max(numVal * 1.3, 20);
+    const niceStep = Math.max(20, Math.ceil(rawMax / 5 / 20) * 20);
+    const maxY = niceStep * 5;
+
+    // Grid + Y labels
+    ctx.font = '10px Calibri, Arial, sans-serif';
+    ctx.fillStyle = '#555';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 5; i++) {
+        const yVal = i * niceStep;
+        const yPos = padT + chartH - (yVal / maxY) * chartH;
+        ctx.strokeStyle = '#d0d0d0';
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(padL, yPos);
+        ctx.lineTo(padL + chartW, yPos);
+        ctx.stroke();
+        ctx.fillStyle = '#555';
+        ctx.fillText(yVal, padL - 5, yPos + 4);
+    }
+
+    // 3D bar geometry
+    const barW = Math.min(chartW * 0.30, 100);
+    const dX = barW * 0.48;
+    const dY = barW * 0.22;
+    const barX = padL + (chartW - barW) / 2 - dX / 2;
+    const barHpx = Math.max(2, (numVal / maxY) * chartH);
+    const barY = padT + chartH - barHpx;
+
+    // Right face (darker)
+    ctx.fillStyle = '#2E5F9E';
+    ctx.beginPath();
+    ctx.moveTo(barX + barW, barY);
+    ctx.lineTo(barX + barW + dX, barY - dY);
+    ctx.lineTo(barX + barW + dX, barY - dY + barHpx);
+    ctx.lineTo(barX + barW, barY + barHpx);
+    ctx.closePath();
+    ctx.fill();
+
+    // Front face
+    ctx.fillStyle = '#5b9bd5';
+    ctx.fillRect(barX, barY, barW, barHpx);
+
+    // Top face (lighter)
+    ctx.fillStyle = '#91BFDC';
+    ctx.beginPath();
+    ctx.moveTo(barX, barY);
+    ctx.lineTo(barX + barW, barY);
+    ctx.lineTo(barX + barW + dX, barY - dY);
+    ctx.lineTo(barX + dX, barY - dY);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+}
+
 function refreshEPS() {
     const val = document.getElementById('epsIn').value;
     const custName = document.getElementById('inName').value || 'Customer';
-    document.getElementById('epsValDisplay').innerText = val;
-    if (activeCharts.eps) activeCharts.eps.destroy();
-    activeCharts.eps = new Chart(document.getElementById('epsChart'), {
-        type: 'bar',
-        data: { labels: ['AVG EPS'], datasets: [{ label: custName, data: [val], backgroundColor: '#5b9bd5' }] },
-        options: { maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
-    });
+    const epsDisplay = document.getElementById('epsValDisplay');
+    const epsLabel = document.getElementById('epsCustomerLabel');
+    if (epsDisplay) epsDisplay.innerText = val;
+    if (epsLabel) epsLabel.innerText = custName;
+
+    const canvasEl = document.getElementById('epsChart');
+    if (!canvasEl) return;
+
+    draw3DEPSChart(canvasEl, val, custName, window.devicePixelRatio || 1);
+
+    // Store a Chart.js-compatible object so setChartsHighDPIForPrint works
+    activeCharts.eps = {
+        canvas: canvasEl,
+        _val: val,
+        _custName: custName,
+        options: { devicePixelRatio: window.devicePixelRatio || 1 },
+        resize: function () {
+            draw3DEPSChart(this.canvas, this._val, this._custName, this.options.devicePixelRatio || window.devicePixelRatio || 1);
+        },
+        destroy: function () {}
+    };
 }
 
 document.getElementById('deviceCsv').addEventListener('change', function (e) {
@@ -1042,198 +1139,90 @@ document.getElementById('incidentCsv').addEventListener('change', function (e) {
             const headers = results.meta.fields;
             const sevCol = headers.find(h => h.toUpperCase().includes("SEVERITY"));
             const resCol = headers.find(h => h.toUpperCase().includes("RESOLUTION"));
-            let stats = { HIGH: 0, MEDIUM: 0, LOW: 0 }, fpData = { HIGH: 0, MEDIUM: 0, LOW: 0 }, tpData = { HIGH: 0, MEDIUM: 0, LOW: 0 };
+            let stats = { HIGH: 0, MEDIUM: 0, LOW: 0 };
+            let fpData = { HIGH: 0, MEDIUM: 0, LOW: 0 };
+            let tpData = { HIGH: 0, MEDIUM: 0, LOW: 0 };
 
             results.data.forEach(row => {
                 const s = (row[sevCol] || "").toUpperCase().trim();
                 const r = (row[resCol] || "").trim().toLowerCase();
                 if (stats.hasOwnProperty(s)) {
                     stats[s]++;
-                    // Fallback to simpler comparisons to prevent missing valid counts
                     if (r.includes("false positive") || r.includes("fp")) fpData[s]++;
                     else if (r.includes("true positive") || r.includes("tp")) tpData[s]++;
                 }
             });
 
-            // Re-show the chart containers and hide the blank text
+            // ── SEVERITY CHART (Section 3) ──────────────────────────────────
             const sevMsg = document.getElementById('sevBlankMsg');
-            if (sevMsg) sevMsg.style.display = 'none';
             const sevContainer = document.getElementById('sevChartContainer');
-            if (sevContainer) sevContainer.style.display = 'flex';
-
-            const fpMsg = document.getElementById('fpBlankMsg');
-            if (fpMsg) fpMsg.style.display = 'none';
-            const fpContainer = document.getElementById('fpChartContainer');
-            if (fpContainer) fpContainer.style.display = 'flex';
-
-            const tpMsg = document.getElementById('tpBlankMsg');
-            if (tpMsg) tpMsg.style.display = 'none';
-            const tpContainer = document.getElementById('tpChartContainer');
-            if (tpContainer) tpContainer.style.display = 'flex';
-
             if (stats.HIGH > 0 || stats.MEDIUM > 0 || stats.LOW > 0) {
+                if (sevMsg) sevMsg.style.display = 'none';
                 if (sevContainer) {
+                    sevContainer.style.display = 'flex';
                     sevContainer.style.height = 'auto';
                     const wrap = sevContainer.querySelector('.canvas-wrap');
-                    if (wrap) wrap.style.height = '366px';
+                    if (wrap) wrap.style.height = '200px';
                 }
                 renderIncidentChart('sevChart', stats, "Incident Severity");
             } else {
-                if (sevContainer) sevContainer.style.height = 'auto';
-                if (sevMsg) sevMsg.style.display = 'block';
-                if (activeCharts.sevChart) {
-                    activeCharts.sevChart.destroy();
-                    delete activeCharts.sevChart;
-                }
+                if (sevContainer) sevContainer.style.display = 'none';
+                if (sevMsg) { sevMsg.style.display = 'block'; sevMsg.innerText = 'No incidents observed.'; }
             }
 
+            // ── TRUE POSITIVE CHART (Section 4) ────────────────────────────
             const tpTotal = tpData.HIGH + tpData.MEDIUM + tpData.LOW;
-            const fpTotal = fpData.HIGH + fpData.MEDIUM + fpData.LOW;
-
-            const tpHalfContainer = document.getElementById('tpHalfContainer');
-            const fpHalfContainer = document.getElementById('fpHalfContainer');
-            const isBluPineNow = document.getElementById('inName').value.trim().toLowerCase().includes('blupine');
-
-            // ── TRUE POSITIVE ──────────────────────────────────────────────
-            if (tpTotal === 0) {
-                if (tpHalfContainer) tpHalfContainer.style.height = 'auto';
-                if (tpMsg) tpMsg.style.display = 'block';
-                const tpWrap = document.getElementById('tpWrap');
-                if (tpWrap) tpWrap.style.display = 'none';
-                const tpContainer2 = document.getElementById('tpChartContainer');
-                if (tpContainer2) tpContainer2.style.display = 'none';
-                if (activeCharts.tpChart) { activeCharts.tpChart.destroy(); delete activeCharts.tpChart; }
-            } else {
-                if (tpHalfContainer) tpHalfContainer.style.height = 'auto';
-                const tpContainer2 = document.getElementById('tpChartContainer');
-                if (tpContainer2) { tpContainer2.style.display = 'flex'; tpContainer2.style.height = '400px'; }
-                const tpWrap = document.getElementById('tpWrap');
-                if (tpWrap) { tpWrap.style.display = 'block'; tpWrap.style.height = '366px'; }
+            const tpMsg = document.getElementById('tpBlankMsg');
+            const tpContainer = document.getElementById('tpChartContainer');
+            const tpWrap = document.getElementById('tpWrap');
+            if (tpTotal > 0) {
+                if (tpMsg) tpMsg.style.display = 'none';
+                if (tpContainer) { tpContainer.style.display = 'flex'; tpContainer.style.height = 'auto'; }
+                if (tpWrap) { tpWrap.style.display = 'block'; tpWrap.style.height = '160px'; }
                 renderIncidentChart('tpChart', tpData, "True Positive");
-            }
-
-            // ── FALSE POSITIVE ─────────────────────────────────────────────
-            const p5 = document.getElementById('p5');
-            const p6 = document.getElementById('p6');
-            const container = document.getElementById('incidentSectionsContainer');
-
-            if (fpTotal === 0) {
-                // No FP data at all — hide the entire FP half-container and its messages
-                if (fpHalfContainer) fpHalfContainer.style.display = 'none';
-                if (fpMsg) fpMsg.style.display = 'none';
-                const fpChartBox = document.getElementById('fpChartContainer');
-                if (fpChartBox) fpChartBox.style.display = 'none';
-                const fpMissingNote = document.getElementById('fpMissingNote');
-                if (fpMissingNote) fpMissingNote.style.display = 'none';
-                if (activeCharts.fpChart) { activeCharts.fpChart.destroy(); delete activeCharts.fpChart; }
             } else {
-                // FP data exists — show FP chart
-                if (fpHalfContainer) { fpHalfContainer.style.display = 'flex'; fpHalfContainer.style.height = 'auto'; fpHalfContainer.style.flex = '0 0 auto'; }
-                if (fpMsg) fpMsg.style.display = 'none';
-                const fpChartBox = document.getElementById('fpChartContainer');
-                if (fpChartBox) {
-                    fpChartBox.style.display = 'flex';
-                    const wrap = fpChartBox.querySelector('.canvas-wrap');
-                    if (wrap) wrap.style.height = '366px';
-                }
-                renderIncidentChart('fpChart', fpData, "False Positive");
+                if (tpContainer) tpContainer.style.display = 'none';
+                if (tpMsg) { tpMsg.style.display = 'block'; tpMsg.innerText = 'No True Positive incidents observed.'; }
             }
 
-            // ── PAGE PLACEMENT ─────────────────────────────────────────────
-            // Rule: if FP = 0, skip the FP section and go straight to sections 5 & 6.
-            //       Place incidentSectionsContainer on p6 always (BluPine or not),
-            //       but only show p6 when needed.
-            if (fpTotal === 0) {
-                // No FP — move incidents up to p5 (non-BluPine) or p6 (BluPine needs chart section too)
-                if (isBluPineNow) {
-                    // BluPine: p6 shows bluPine chart (sec 5) + incidents table (sec 6), no FP area
-                    if (p6 && container) {
-                        p6.style.display = 'flex';
-                        let footer = p6.querySelector('.footer-text-row');
-                        if (footer) p6.insertBefore(container, footer);
-                        else p6.appendChild(container);
-                    }
-                } else {
-                    // Non-BluPine: no FP, no bluPine chart — move incidents straight to p5
-                    if (p5 && container) {
-                        let footer = p5.querySelector('.footer-text-row');
-                        if (footer) p5.insertBefore(container, footer);
-                        else p5.appendChild(container);
-                    }
-                    if (p6) p6.style.display = 'none';
-                }
-            } else {
-                // FP chart exists — always place incidents on p6 below the FP chart
-                if (p6 && container) {
-                    p6.style.display = 'flex';
-                    let footer = p6.querySelector('.footer-text-row');
-                    if (footer) p6.insertBefore(container, footer);
-                    else p6.appendChild(container);
-                }
-            }
+            // ── FALSE POSITIVE TEXT (below Section 4 chart) ────────────────
+            const fpTotal = fpData.HIGH + fpData.MEDIUM + fpData.LOW;
+            updateFPText(fpTotal, fpData);
 
-            // Populate the incidents table using the raw CSV dataset
-            // Remove all extra overflow pages first, keep only the main tbody
+            // ── INCIDENT TABLE (Section 5, always on p6) ───────────────────
             document.querySelectorAll('.incident-tbody').forEach((tb, idx) => {
-                if (idx > 0) {
-                    const pg = tb.closest('.page');
-                    if (pg) pg.remove();
-                } else {
-                    tb.innerHTML = '';
-                }
+                if (idx > 0) { const pg = tb.closest('.page'); if (pg) pg.remove(); }
+                else tb.innerHTML = '';
             });
 
-            // First: ensure incidentSectionsContainer and section5Wrapper are
-            // correctly placed on p6 (with BluPine section above if needed),
-            // BEFORE measuring page boundaries for overflow detection.
             adjustLayoutForBluPine();
 
             const ticketCol = headers.find(h => h.toUpperCase().includes("TICKET")) || "Ticket No";
             const titleCol = headers.find(h => h.toUpperCase().includes("INCIDENT TITLE") || h.toUpperCase() === "TITLE" || h.toUpperCase() === "ALERT NAME") || "Incident Title";
-            const obsCol = headers.find(h => h.toUpperCase().includes("OBSERVATION")) || "Observation & Recommendation";
             const statusCol = headers.find(h => h.toUpperCase() === "STATUS") || "Status";
-            const tfpCol = headers.find(h => h.toUpperCase().includes("TRUE") || h.toUpperCase().includes("FALSE") || h.toUpperCase() === "TYPE") || "True/False Positive";
 
-            // Insert all rows first, then let managePagination handle overflow
             let currentTbody = document.querySelector('.incident-tbody');
-
             if (results.data.length > 0) {
                 results.data.forEach((row, i) => {
-                    let sn = i + 1;
-                    let ticket = row[ticketCol] || '#';
-                    let severity = row[sevCol] || 'N/A';
-                    let title = row[titleCol] || 'N/A';
-                    let obs = row[obsCol] || 'Enter observation...';
-                    let status = row[statusCol] || 'Open';
-                    let tfp = row[tfpCol] || 'TBD';
-
-                    let tr = '<tr>'
-                        + `<td contenteditable="true">${sn}</td>`
-                        + `<td contenteditable="true">${escapeHtmlCell(ticket)}</td>`
-                        + `<td contenteditable="true">${escapeHtmlCell(severity)}</td>`
-                        + `<td contenteditable="true">${escapeHtmlCell(title)}</td>`
-                        + `<td contenteditable="true">${escapeHtmlCell(obs)}</td>`
-                        + `<td contenteditable="true">${escapeHtmlCell(status)}</td>`
-                        + `<td contenteditable="true">${escapeHtmlCell(tfp)}</td>`
+                    const tr = '<tr>'
+                        + `<td contenteditable="true">${i + 1}</td>`
+                        + `<td contenteditable="true">${escapeHtmlCell(row[ticketCol] || '#')}</td>`
+                        + `<td contenteditable="true">${escapeHtmlCell(row[sevCol] || 'N/A')}</td>`
+                        + `<td contenteditable="true">${escapeHtmlCell(row[titleCol] || 'N/A')}</td>`
+                        + `<td contenteditable="true">${escapeHtmlCell(row[statusCol] || 'Open')}</td>`
                         + '</tr>';
                     currentTbody.insertAdjacentHTML('beforeend', tr);
                 });
             } else {
-                currentTbody.innerHTML = ''
-                    + '<tr>'
+                currentTbody.innerHTML = '<tr>'
                     + '<td contenteditable="true">1</td>'
                     + '<td contenteditable="true">#</td>'
                     + '<td contenteditable="true">High</td>'
                     + '<td contenteditable="true">New Incident</td>'
-                    + '<td contenteditable="true">Enter observation...</td>'
                     + '<td contenteditable="true">Open</td>'
-                    + '<td contenteditable="true">TBD</td>'
                     + '</tr>';
             }
 
-            // After all rows are inserted, wait for TWO animation frames so the
-            // browser has fully painted the layout (including BluPine chart height)
-            // before measuring for pagination. This prevents headings being orphaned.
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     managePagination();
@@ -1276,6 +1265,27 @@ function renderIncidentChart(id, counts, label) {
     });
 }
 
+function updateFPText(fpTotal, fpData) {
+    const heading = document.getElementById('fpTextHeading');
+    const body = document.getElementById('fpTextBody');
+    if (!body) return;
+    const dr = window._fpDateRange || {};
+    const from = dr.coverDate || '';
+    const to = dr.todayDate || '';
+    const rangeStr = from && to ? ` from ${from} 9:00 PM to ${to} 9:00 PM` : '';
+    if (!fpTotal || fpTotal === 0) {
+        body.innerText = `No False positive incidents have been observed${rangeStr}.`;
+    } else {
+        const parts = [];
+        if (fpData && fpData.HIGH > 0) parts.push(`${fpData.HIGH} High`);
+        if (fpData && fpData.MEDIUM > 0) parts.push(`${fpData.MEDIUM} Medium`);
+        if (fpData && fpData.LOW > 0) parts.push(`${fpData.LOW} Low`);
+        body.innerText = `${parts.join(', ')} false positive incident${fpTotal > 1 ? 's' : ''} observed${rangeStr}.`;
+    }
+    if (heading) heading.style.display = 'block';
+    body.style.display = 'block';
+}
+
 window.onload = () => {
     // Handle n-1 logic for the date
     let date = new Date();
@@ -1303,44 +1313,32 @@ window.onload = () => {
     let docPrepText = `${formattedToday} (9PM ${n1Day}${suffixN1} ${monthNames[date.getMonth()]} to 9PM ${todayDay}${suffixT} ${monthNames[today.getMonth()]})`;
     document.querySelectorAll('.auto-date-doc-prep').forEach(el => el.innerText = docPrepText);
 
-    // Set Blank State Text up immediately
-    const coverDateText = document.getElementById('coverDate').innerText;
+    // Expose date range for FP text generation
+    window._fpDateRange = { coverDate: formattedDate, todayDate: formattedToday };
 
+    // Blank-state messages
+    const coverDateText = document.getElementById('coverDate').innerText;
     const blankMessage = `No potential incidents have been observed from ${coverDateText} 9:00 PM to ${formattedToday} 9:00 PM.`;
 
     const sevMsg = document.getElementById('sevBlankMsg');
     if (sevMsg) sevMsg.innerText = blankMessage;
 
     const tpMsg = document.getElementById('tpBlankMsg');
-    if (tpMsg) tpMsg.innerHTML = `<strong>True Positive :</strong><br><br>${blankMessage}`;
-
-    const fpMsg = document.getElementById('fpBlankMsg');
-    if (fpMsg) fpMsg.innerHTML = `<strong>False Positive :</strong><br><br>${blankMessage}`;
+    if (tpMsg) tpMsg.innerText = 'No True Positive incidents observed.';
 
     const bpMsg = document.getElementById('bpBlankMsg');
     if (bpMsg) bpMsg.innerText = `No potential incidents with count have been observed from ${coverDateText} 9:00 PM to ${formattedToday} 9:00 PM.`;
 
-    document.querySelectorAll('#sevHalfContainer, #tpHalfContainer, #fpHalfContainer').forEach(container => {
-        if (container) container.style.height = 'auto'; // Allow containers to collapse gracefully when filled with just text
+    // Set default FP text
+    updateFPText(0, null);
+
+    document.querySelectorAll('#sevHalfContainer, #tpHalfContainer').forEach(c => {
+        if (c) c.style.height = 'auto';
     });
-
-    // Default state: Move Potential Incidents directly underneath TP/FP messages
-    const p5 = document.getElementById('p5');
-    const p6 = document.getElementById('p6');
-    const container = document.getElementById('incidentSectionsContainer');
-    const tpHalfContainer = document.getElementById('tpHalfContainer');
-
-    if (p5 && container && tpHalfContainer) {
-        let footer = p5.querySelector('.footer-text-row');
-        if (footer) p5.insertBefore(container, footer);
-        else p5.appendChild(container); // Fix for fields missing
-    }
-    if (p6) p6.style.display = 'none';
 
     sync();
     updatePageNumbers();
 
-    // Auto-paginate when typing into any row so it never breaks layout dynamically
     document.addEventListener('input', function (e) {
         if (e.target.closest('.incident-tbody')) {
             managePagination();
