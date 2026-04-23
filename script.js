@@ -1016,9 +1016,9 @@ function draw3DEPSChart(canvasEl, value, custName, ratio) {
     const dX = depth;
     const dY = Math.round(depth * 0.55);
 
-    // Y scale: round up to nearest 20 so 90 → maxY 120 (steps 0,20,40…)
+    // Y scale: next multiple of 20 strictly above value (90 → 100, 100 → 120)
     const numVal = parseFloat(value) || 0;
-    const maxY = Math.max(20, Math.ceil(numVal * 1.25 / 20) * 20);
+    const maxY = Math.max(20, Math.ceil((numVal + 1) / 20) * 20);
 
     // Screen y for chart y-value
     const scY = (v) => padT + chartH - (v / maxY) * chartH;
@@ -1031,7 +1031,7 @@ function draw3DEPSChart(canvasEl, value, custName, ratio) {
 
     // ── Back-wall fill (parallelogram) ───────────────────────────────────
     // Corners: front-top-left → back-top-right → back-bottom-right → front-bottom-left
-    ctx.fillStyle = '#f5f5f5';
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.moveTo(padL,           padT);
     ctx.lineTo(padL + chartW + dX, padT - dY);
@@ -1105,6 +1105,14 @@ function draw3DEPSChart(canvasEl, value, custName, ratio) {
     ctx.strokeStyle = '#4a85bb';
     ctx.lineWidth = 0.5;
     ctx.strokeRect(barX, barY, barW, barHpx);
+
+    // Left Y-axis line (draw on top of everything for visibility)
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padL, padT);
+    ctx.lineTo(padL, padT + chartH);
+    ctx.stroke();
 
     ctx.restore();
 }
@@ -1345,10 +1353,8 @@ window.onload = () => {
     let formattedToday = ("0" + todayDay).slice(-2) + "-" + ("0" + todayMonth).slice(-2) + "-" + todayYear;
 
     let n1Day = date.getDate();
-    let suffixN1 = n1Day === 1 || n1Day === 21 || n1Day === 31 ? 'st' : n1Day === 2 || n1Day === 22 ? 'nd' : n1Day === 3 || n1Day === 23 ? 'rd' : 'th';
-    let suffixT = todayDay === 1 || todayDay === 21 || todayDay === 31 ? 'st' : todayDay === 2 || todayDay === 22 ? 'nd' : todayDay === 3 || todayDay === 23 ? 'rd' : 'th';
-
-    let docPrepText = `${formattedToday} (9PM ${n1Day}${suffixN1} ${monthNames[date.getMonth()]} to 9PM ${todayDay}${suffixT} ${monthNames[today.getMonth()]})`;
+    let formattedTodaySlash = ("0" + todayDay).slice(-2) + "/" + ("0" + todayMonth).slice(-2) + "/" + todayYear;
+    let docPrepText = `${formattedTodaySlash} (09 PM ${n1Day} ${monthNames[date.getMonth()]} to 09 PM ${todayDay} ${monthNames[today.getMonth()]})`;
     document.querySelectorAll('.auto-date-doc-prep').forEach(el => el.innerText = docPrepText);
 
     // Expose date range for FP text generation
