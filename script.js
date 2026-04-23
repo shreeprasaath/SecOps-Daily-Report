@@ -989,8 +989,10 @@ function updatePageNumbers() {
 function draw3DEPSChart(canvasEl, value, custName, ratio) {
     ratio = ratio || (window.devicePixelRatio || 1);
     const wrap = canvasEl.parentElement;
-    const cssW = (wrap && wrap.clientWidth > 10) ? wrap.clientWidth : 380;
-    const cssH = (wrap && wrap.clientHeight > 10) ? wrap.clientHeight : 200;
+    let cssW = wrap ? (wrap.clientWidth || wrap.offsetWidth || 400) : 400;
+    let cssH = wrap ? (wrap.clientHeight || wrap.offsetHeight || 280) : 280;
+    if (cssW < 20) cssW = 400;
+    if (cssH < 20) cssH = 280;
 
     canvasEl.width = Math.round(cssW * ratio);
     canvasEl.height = Math.round(cssH * ratio);
@@ -1003,70 +1005,106 @@ function draw3DEPSChart(canvasEl, value, custName, ratio) {
     ctx.scale(ratio, ratio);
 
     const W = cssW, H = cssH;
-    const padL = 48, padR = 20, padT = 30, padB = 10;
-    const chartW = W - padL - padR;
+
+    // Layout — leave room for 3D depth on right
+    const padL = 55, padR = 8, padT = 32, padB = 8;
+    const depth = Math.round(W * 0.14); // 3D depth pixels
+    const chartW = W - padL - padR - depth;
     const chartH = H - padT - padB;
 
-    // Chart title (customer name)
-    ctx.font = 'bold 13px Calibri, Arial, sans-serif';
+    // Depth vector (upper-right, Excel-style perspective)
+    const dX = depth;
+    const dY = Math.round(depth * 0.55);
+
+    // Y scale: round up to nearest 20 so 90 → maxY 120 (steps 0,20,40…)
+    const numVal = parseFloat(value) || 0;
+    const maxY = Math.max(20, Math.ceil(numVal * 1.25 / 20) * 20);
+
+    // Screen y for chart y-value
+    const scY = (v) => padT + chartH - (v / maxY) * chartH;
+
+    // ── Chart title (customer name) ──────────────────────────────────────
+    ctx.font = 'bold 14px Calibri, Arial, sans-serif';
     ctx.fillStyle = '#222';
     ctx.textAlign = 'center';
-    ctx.fillText(custName, padL + chartW / 2, 20);
+    ctx.fillText(custName, padL + (chartW + dX) / 2, 21);
 
-    // Y scale
-    const numVal = parseFloat(value) || 0;
-    const rawMax = Math.max(numVal * 1.3, 20);
-    const niceStep = Math.max(20, Math.ceil(rawMax / 5 / 20) * 20);
-    const maxY = niceStep * 5;
-
-    // Grid + Y labels
-    ctx.font = '10px Calibri, Arial, sans-serif';
-    ctx.fillStyle = '#555';
-    ctx.textAlign = 'right';
-    for (let i = 0; i <= 5; i++) {
-        const yVal = i * niceStep;
-        const yPos = padT + chartH - (yVal / maxY) * chartH;
-        ctx.strokeStyle = '#d0d0d0';
-        ctx.lineWidth = 0.6;
-        ctx.beginPath();
-        ctx.moveTo(padL, yPos);
-        ctx.lineTo(padL + chartW, yPos);
-        ctx.stroke();
-        ctx.fillStyle = '#555';
-        ctx.fillText(yVal, padL - 5, yPos + 4);
-    }
-
-    // 3D bar geometry
-    const barW = Math.min(chartW * 0.30, 100);
-    const dX = barW * 0.48;
-    const dY = barW * 0.22;
-    const barX = padL + (chartW - barW) / 2 - dX / 2;
-    const barHpx = Math.max(2, (numVal / maxY) * chartH);
-    const barY = padT + chartH - barHpx;
-
-    // Right face (darker)
-    ctx.fillStyle = '#2E5F9E';
+    // ── Back-wall fill (parallelogram) ───────────────────────────────────
+    // Corners: front-top-left → back-top-right → back-bottom-right → front-bottom-left
+    ctx.fillStyle = '#f5f5f5';
     ctx.beginPath();
-    ctx.moveTo(barX + barW, barY);
-    ctx.lineTo(barX + barW + dX, barY - dY);
-    ctx.lineTo(barX + barW + dX, barY - dY + barHpx);
-    ctx.lineTo(barX + barW, barY + barHpx);
+    ctx.moveTo(padL,           padT);
+    ctx.lineTo(padL + chartW + dX, padT - dY);
+    ctx.lineTo(padL + chartW + dX, padT + chartH - dY);
+    ctx.lineTo(padL,           padT + chartH);
     ctx.closePath();
     ctx.fill();
 
-    // Front face
+    // ── Diagonal grid lines (Excel 3D back-wall style) ───────────────────
+    // Each line goes from (padL, scY(v)) → (padL+chartW+dX, scY(v)−dY)
+    ctx.strokeStyle = '#c8c8c8';
+    ctx.lineWidth = 0.7;
+    for (let v = 0; v <= maxY; v += 20) {
+        const yFront = scY(v);
+        ctx.beginPath();
+        ctx.moveTo(padL, yFront);
+        ctx.lineTo(padL + chartW + dX, yFront - dY);
+        ctx.stroke();
+    }
+
+    // ── Back-wall border outline ─────────────────────────────────────────
+    ctx.strokeStyle = '#b0b0b0';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(padL,           padT);
+    ctx.lineTo(padL + chartW + dX, padT - dY);
+    ctx.lineTo(padL + chartW + dX, padT + chartH - dY);
+    ctx.lineTo(padL,           padT + chartH);
+    ctx.closePath();
+    ctx.stroke();
+
+    // ── Y-axis labels ────────────────────────────────────────────────────
+    ctx.font = '11px Calibri, Arial, sans-serif';
+    ctx.fillStyle = '#444';
+    ctx.textAlign = 'right';
+    for (let v = 0; v <= maxY; v += 20) {
+        ctx.fillText(v, padL - 5, scY(v) + 4);
+    }
+
+    // ── 3D Bar ───────────────────────────────────────────────────────────
+    const barW  = Math.min(chartW * 0.32, 105);
+    const barX  = padL + (chartW - barW) / 2;
+    const barHpx = Math.max(2, Math.round((numVal / maxY) * chartH));
+    const barY  = padT + chartH - barHpx;
+
+    // Right face (darker blue)
+    ctx.fillStyle = '#2F619E';
+    ctx.beginPath();
+    ctx.moveTo(barX + barW,       barY);
+    ctx.lineTo(barX + barW + dX,  barY - dY);
+    ctx.lineTo(barX + barW + dX,  barY - dY + barHpx);
+    ctx.lineTo(barX + barW,       barY + barHpx);
+    ctx.closePath();
+    ctx.fill();
+
+    // Front face (medium blue — draw after back-wall so it sits in front)
     ctx.fillStyle = '#5b9bd5';
     ctx.fillRect(barX, barY, barW, barHpx);
 
-    // Top face (lighter)
-    ctx.fillStyle = '#91BFDC';
+    // Top face (lighter blue)
+    ctx.fillStyle = '#A8D0E8';
     ctx.beginPath();
-    ctx.moveTo(barX, barY);
-    ctx.lineTo(barX + barW, barY);
+    ctx.moveTo(barX,          barY);
+    ctx.lineTo(barX + barW,   barY);
     ctx.lineTo(barX + barW + dX, barY - dY);
-    ctx.lineTo(barX + dX, barY - dY);
+    ctx.lineTo(barX + dX,     barY - dY);
     ctx.closePath();
     ctx.fill();
+
+    // Subtle outline on front face
+    ctx.strokeStyle = '#4a85bb';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(barX, barY, barW, barHpx);
 
     ctx.restore();
 }
