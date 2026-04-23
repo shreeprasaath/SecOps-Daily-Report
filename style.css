@@ -1,0 +1,461 @@
+@page {
+    size: A4;
+    margin: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: "Calibri", "Arial", sans-serif;
+    background: #525659;
+    margin: 0;
+    padding: 20px;
+}
+
+/* Dashboard Control */
+.no-print {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 1100px;
+    margin: 0 auto 30px auto;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+    font-size: 10pt;
+    color: #2e75b6;
+}
+
+input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* Page Structure */
+.page {
+    background: white;
+    width: 210mm;
+    height: 297mm;
+    padding: 15mm 20mm;
+    margin: 0 auto 20px auto;
+    position: relative;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+/* PAGE 1: BRANDING */
+.page-cover {
+    text-align: left;
+    padding-top: 5mm;
+    flex-grow: 1;
+}
+
+.page-cover h1 {
+    color: #2e75b6;
+    font-size: 38pt;
+    margin: 0;
+    font-weight: bold;
+}
+
+.bottom-branding {
+    margin-top: auto;
+    padding-bottom: 5mm;
+    width: 100%;
+}
+
+.logo-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 0 1mm;
+}
+
+.logo-box {
+    height: 35mm;
+    width: auto;
+    max-width: 250px;
+    object-fit: contain;
+}
+
+.company-name-full {
+    color: #ff0000;
+    font-size: 26pt;
+    font-weight: bold;
+    width: 100%;
+    display: block;
+    text-align: center;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    border-top: 2.5px solid #ff0000;
+    padding-top: 8px;
+}
+
+/* TOC & Document Control */
+.toc-item {
+    display: flex;
+    align-items: baseline;
+    padding: 10px 0;
+    font-size: 13pt;
+    text-decoration: none;
+    color: #000;
+    cursor: pointer;
+}
+
+.toc-dots {
+    flex-grow: 1;
+    border-bottom: 1px dotted #000;
+    margin: 0 5px;
+    height: 1em;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.doc-control-table th,
+.doc-control-table td {
+    border: 1px solid black;
+    padding: 10px;
+    text-align: left;
+    font-size: 11pt;
+}
+
+/* Potential Incident Table (Bordered) */
+.data-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.data-table th,
+.data-table td {
+    border: 1px solid #ccc;
+    padding: 8px 10px;
+    font-size: 11pt;
+    text-align: left;
+}
+
+.data-table th {
+    background: #f2f2f2;
+    font-weight: bold;
+    border-top: none;
+}
+
+.data-table td:first-child,
+.data-table th:first-child {
+    border-left: none;
+}
+
+.data-table td:last-child,
+.data-table th:last-child {
+    border-right: none;
+}
+
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Potential Incidents: fixed columns + wrapping so headers/cells stay inside the black border */
+.incident-table-wrap {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: visible;
+}
+
+.incident-table-wrap.box-border {
+    /* Fit table to page width; column px widths + normalize prevent horizontal scroll */
+    overflow-x: hidden;
+    overflow-y: visible;
+}
+
+.incident-data-table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 0;
+}
+
+.incident-data-table th,
+.incident-data-table td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: none;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Observation & Recommendation: left-aligned (long text reads better) */
+.incident-data-table thead th:nth-child(5),
+.incident-data-table tbody td:nth-child(5) {
+    text-align: left;
+}
+
+.incident-data-table th {
+    white-space: normal;
+    line-height: 1.2;
+    padding: 6px 5px;
+    font-size: 10pt;
+    position: relative;
+}
+
+/* Column drag resize (screen only — hidden when printing) */
+.incident-col-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -4px;
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 4;
+    user-select: none;
+    touch-action: none;
+}
+
+.incident-col-resize-handle:hover {
+    background: rgba(46, 117, 182, 0.18);
+}
+
+.incident-data-table th:last-child .incident-col-resize-handle {
+    display: none;
+}
+
+.incident-data-table td {
+    font-size: 10.5pt;
+}
+
+/* Column share of table width (sums to 100%) */
+.inc-col-sn {
+    width: 5%;
+}
+
+.inc-col-ticket {
+    width: 10%;
+}
+
+.inc-col-sev {
+    width: 9%;
+}
+
+.inc-col-title {
+    width: 16%;
+}
+
+.inc-col-obs {
+    width: 34%;
+}
+
+.inc-col-status {
+    width: 10%;
+}
+
+.inc-col-tfp {
+    width: 16%;
+}
+
+/* Keep last column’s right edge visible inside the bordered box */
+.incident-data-table td:last-child,
+.incident-data-table th:last-child {
+    border-right: 1px solid #ccc;
+}
+
+/* Same heading rhythm for main block vs (Continued) pages */
+h3.incident-section-heading {
+    margin-top: 18px;
+    margin-bottom: 10px;
+}
+
+.page.incident-page-extra h3.incident-section-heading--continued {
+    margin-top: 12px;
+    margin-bottom: 10px;
+}
+
+/* NOTE moved to its own page when the last row is too tall to share the page with the NOTE */
+.page.incident-note-overflow-page {
+    display: flex;
+    flex-direction: column;
+}
+
+.incident-note-overflow-inner p#incidentStatusNote {
+    margin: 0;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.35;
+}
+
+/* 50/50 Layout */
+.half-container {
+    height: 46%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 2%;
+    position: relative;
+}
+
+.box-border {
+    border: 2px solid #000;
+    padding: 15px;
+    flex-grow: 1;
+    position: relative;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.canvas-wrap {
+    flex-grow: 1;
+    position: relative;
+    min-height: 0;
+}
+
+/* FOOTER BRANDING */
+.section-header {
+    font-size: 18pt;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.footer-strip {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 35px;
+    display: flex;
+}
+
+.strip-blue {
+    background: #b4c7e7;
+    width: 45%;
+}
+
+.strip-pink {
+    background: #f8cbad;
+    width: 55%;
+}
+
+.strip-cover-blue {
+    background: #2e358b;
+    width: 45%;
+}
+
+.strip-cover-red {
+    background: #ed1c24;
+    width: 55%;
+}
+
+.footer-text-row {
+    position: absolute;
+    bottom: 45px;
+    left: 20mm;
+    right: 20mm;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10pt;
+    font-weight: bold;
+}
+
+.confidential-mark {
+    color: #888;
+}
+
+.page-num {
+    text-align: right;
+}
+
+/* Fixed above footer so it stays visible on continuation / long pages (not pushed below the page box) */
+.end-doc-pin {
+    position: absolute;
+    left: 20mm;
+    right: 20mm;
+    bottom: 88px;
+    width: auto;
+    text-align: center;
+    font-weight: bold;
+    font-size: 13pt;
+    margin: 0;
+    padding: 2px 0;
+    z-index: 1;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+.btn-row {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.action-btn {
+    background: #2e75b6;
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.action-btn.del {
+    background: #d9534f;
+}
+
+@media print {
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Sharper chart/canvas output in PDF */
+    .canvas-wrap canvas {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+
+    .no-print,
+    .btn-row,
+    .incident-col-resize-handle,
+    .incident-resize-hint {
+        display: none !important;
+    }
+
+    body {
+        background: none;
+        padding: 0;
+    }
+
+    .page {
+        margin: 0;
+        box-shadow: none;
+    }
+
+    .incident-table-wrap {
+        overflow: visible !important;
+    }
+}

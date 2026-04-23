@@ -1,0 +1,10 @@
+Ticket NO,Incident Title,Severity,Observation & Recommendation,Resolution,Status,True/False Positive
+ #75509,Office365: Brute Force - Login Attempts Same Source,Medium,"Observation: Multiple failed login attempts were detected from the same source targeting **Microsoft 365 accounts, indicating a potential brute force attack.
+
+Remediation: Enable account lockout policies and multi-factor authentication (MFA), and block or investigate the suspicious source IP attempting repeated logins.",True Positive,Open,True Positive
+#75533 ,Safetica Sensitive Data Sent via Email,Medium,"Observation: Sensitive data was detected being sent via email by a user, as identified by Safetica, indicating a potential data leakage risk.
+
+Remediation: Review the email activity, enforce DLP policies to restrict sharing of sensitive data, and provide user awareness on proper data handling practices.",True Positive,Open,True Positive
+#75534,Safetica Sensitive Data Sent via Email,Medium,"Observation: Sensitive data was detected being sent via email by a user, as identified by Safetica, indicating a potential data leakage risk.
+
+Remediation: Review the email activity, enforce DLP policies to restrict sharing of sensitive data, and provide user awareness on proper data handling practices.",True Positive,Open,True Positive

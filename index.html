@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>SOC Daily Report - SNS </title>
+    <!-- Charting & Data Parsing Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <!-- External Stylesheet -->
+    <link rel="stylesheet" href="style.css?v=9">
+</head>
+
+<body>
+
+    <div class="no-print">
+        <h2 style="margin-top:0">SOC Master Dashboard (Editable Version)</h2>
+        <div class="config-grid">
+            <div><label>Customer Name:</label><input type="text" id="inName" placeholder="Customer Name...,"
+                    value="APRAAVA" oninput="sync()">
+            </div>
+            <div><label>Daily AVG EPS:</label><input type="number" id="epsIn" placeholder="EPS Value.," value="82"
+                    oninput="refreshEPS()"></div>
+            <div><label>Reporting Device (CSV):</label><input type="file" id="deviceCsv" accept=".csv"></div>
+            <div><label>Analytics (TP.csv):</label><input type="file" id="incidentCsv" accept=".csv"></div>
+            <div><label>SNSin Logo (Left):</label><input type="file" onchange="loadImg(event, 'snsLogo')"></div>
+            <div><label>Client Logo (Right):</label><input type="file" onchange="loadImg(event, 'custLogo')"></div>
+        </div>
+        <button onclick="printReport()"
+            style="background:#2e75b6; color:white; padding:15px; width:100%; border:none; font-weight:bold; cursor:pointer; margin-top:10px; border-radius: 4px;">PRINT
+            FINAL REPORT</button>
+    </div>
+
+    <div class="page" id="p1">
+        <div class="page-cover" style="padding-top: 140px;">
+            <h1>SOC Daily Report</h1>
+            <p style="font-size:22pt; color:#2e75b6; font-style:italic; margin: 10px 0;">for</p>
+            <h2 id="outCoverName" style="color:#2e75b6; font-size: 34pt;">RMZ</h2>
+            <p style="margin-top:15mm; font-weight:bold; font-size:16pt;">For the Date: <span id="coverDate"
+                    class="auto-date" contenteditable="true"></span></p>
+        </div>
+        <div class="bottom-branding">
+            <div class="logo-container">
+                <img id="snsLogo" class="logo-box" src="" alt="">
+                <img id="custLogo" class="logo-box" src="" alt="">
+            </div>
+            <div class="company-name-full">Secure Network Solutions India Pvt Ltd</div>
+        </div>
+        <div class="footer-text-row"></div>
+        <div class="footer-strip">
+            <div class="strip-cover-blue"></div>
+            <div class="strip-cover-red"></div>
+        </div>
+    </div>
+
+    <div class="page" id="p2">
+        <h3 class="section-header">Document Control</h3>
+        <table class="doc-control-table" contenteditable="true">
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Title</td>
+                    <td id="docControlTitle">SOC Daily Report for RMZ.</td>
+                </tr>
+                <tr>
+                    <td>Document Version</td>
+                    <td>1.0</td>
+                </tr>
+                <tr>
+                    <td>Document Prepared By</td>
+                    <td>Maveera G v</td>
+                </tr>
+                <tr>
+                    <td>Document Prepared On</td>
+                    <td class="auto-date-doc-prep"></td>
+                </tr>
+                <tr>
+                    <td>Document Reviewed By</td>
+                    <td>Kishore Kumar K</td>
+                </tr>
+                <tr>
+                    <td>Document Approved By</td>
+                    <td>Diptesh Saha</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num"
+                style="visibility: visible;">2</span></div>
+        <div class="footer-strip">
+            <div class="strip-blue"></div>
+            <div class="strip-pink"></div>
+        </div>
+    </div>
+
+    <div class="page" id="p3">
+        <h3 class="section-header">Table of Contents</h3>
+        <div class="toc-list">
+            <a href="#p4" class="toc-item"><span>1. Daily Average EPS</span><span
+                    class="toc-dots"></span><span>4</span></a>
+            <a href="#p4" class="toc-item"><span>2. Reporting Device - Average EPS</span><span
+                    class="toc-dots"></span><span>4</span></a>
+            <a href="#p5" class="toc-item"><span>3. Incident Count based on Severity</span><span
+                    class="toc-dots"></span><span>5</span></a>
+            <a href="#fpHalfContainer" class="toc-item"><span>4. False Positive & True Positive</span><span
+                    class="toc-dots"></span><span>5</span></a>
+            <a href="#bluPineSectionWrapper" class="toc-item" id="tocBluPineItem" style="display: none;"><span>5.
+                    Potential Incidents with Count</span><span class="toc-dots"></span><span
+                    id="tocBluPinePage">5</span></a>
+            <a href="#section5Wrapper" class="toc-item" id="tocMainIncidentItem"><span>5. Potential
+                    Incidents</span><span class="toc-dots"></span><span id="tocIncidentPage">5</span></a>
+        </div>
+        <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num">3</span>
+        </div>
+        <div class="footer-strip">
+            <div class="strip-blue"></div>
+            <div class="strip-pink"></div>
+        </div>
+    </div>
+
+    <div class="page" id="p4">
+        <div class="half-container">
+            <h3 class="section-header">1. Daily Average EPS</h3>
+            <div class="box-border">
+                <div class="canvas-wrap"><canvas id="epsChart"></canvas></div>
+                <table style="width:40%; margin: 5px auto; border-collapse: collapse; border: 1px solid #ccc;">
+                    <tr>
+                        <td style="background:#f2f2f2; padding:4px; text-align:center;">AVG EPS</td>
+                        <td id="epsValDisplay" style="padding:4px; text-align:center; font-weight:bold;">82</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="half-container">
+            <h3 class="section-header">2. Reporting Device - Average EPS</h3>
+            <div class="box-border">
+                <div class="canvas-wrap"><canvas id="deviceChart"></canvas></div>
+            </div>
+        </div>
+        <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num">4</span>
+        </div>
+        <div class="footer-strip">
+            <div class="strip-blue"></div>
+            <div class="strip-pink"></div>
+        </div>
+    </div>
+
+    <div class="page" id="p5">
+        <div class="half-container" id="sevHalfContainer">
+            <h3 class="section-header">3. Incident Count based on Severity</h3>
+            <p id="sevBlankMsg"
+                style="margin-top: 15px; font-size: 12pt; line-height: 1.5; display: block; margin-bottom: 25px;"></p>
+            <div class="box-border" id="sevChartContainer" style="display: none;">
+                <div class="canvas-wrap"><canvas id="sevChart"></canvas></div>
+            </div>
+        </div>
+        <div class="half-container" id="tpHalfContainer">
+            <h3 class="section-header">4. False Positive & True Positive</h3>
+            <div id="tpFpBlankRow" style="display: flex; flex-direction: column; gap: 0;">
+                <p id="tpBlankMsg"
+                    style="margin-top: 15px; font-size: 12pt; line-height: 1.5; display: block; margin-bottom: 10px;">
+                </p>
+                <p id="fpBlankMsg" style="font-size: 12pt; line-height: 1.5; display: block; margin-bottom: 25px;"></p>
+            </div>
+            <div class="box-border" id="tpChartContainer" style="display: none;">
+                <div class="canvas-wrap" id="tpWrap"><canvas id="tpChart"></canvas></div>
+            </div>
+            <div class="box-border" id="tpMissingNote"
+                style="display: none; align-items: center; justify-content: center; font-size: 14pt; font-weight: bold; color: #555; text-align: center;">
+                NOTE:<br>No True Positives<br>Recorded
+            </div>
+        </div>
+        <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num">5</span>
+        </div>
+        <div class="footer-strip">
+            <div class="strip-blue"></div>
+            <div class="strip-pink"></div>
+        </div>
+    </div>
+
+    <div class="page" id="p6">
+        <div class="half-container" id="fpHalfContainer">
+            <h3 class="section-header" style="visibility: hidden; margin-bottom: 5px;">Spacer</h3>
+            <div class="box-border" id="fpChartContainer" style="display: none;">
+                <div class="canvas-wrap" id="fpWrap"><canvas id="fpChart"></canvas></div>
+            </div>
+            <div class="box-border" id="fpMissingNote"
+                style="display: none; align-items: center; justify-content: center; font-size: 14pt; font-weight: bold; color: #555; text-align: center;">
+                NOTE:<br>No False Positives<br>Recorded
+            </div>
+        </div>
+        <div id="incidentSectionsContainer"
+            style="flex-grow: 0; display: flex; flex-direction: column; position: relative;">
+            <div id="bluPineSectionWrapper"
+                style="display: none; flex-direction: column; position: relative; margin-bottom: 0px;">
+                <h3 class="section-header" id="bluPineHeader" style="margin-top: 15px;">5. Potential Incidents with
+                    Count
+                </h3>
+                <p id="bpBlankMsg"
+                    style="display: none; margin-top: 15px; font-size: 12pt; line-height: 1.5; margin-bottom: 0px;">
+                </p>
+                <div class="box-border" id="bluPineChartBox"
+                    style="padding:0; margin-bottom: 0px; border: 2px solid #000; flex-grow: 0; min-height: fit-content; height: auto;">
+                    <div class="canvas-wrap" id="bluPineChartWrap" style="height: 366px; padding: 15px;"><canvas
+                            id="bluPineChart"></canvas></div>
+                </div>
+            </div>
+
+            <div id="section5Wrapper" style="flex-grow: 0; display: flex; flex-direction: column; position: relative;">
+                <h3 class="section-header incident-section-heading" id="mainIncidentHeader">5. Potential Incidents</h3>
+                <div class="btn-row"><button class="action-btn" onclick="addRow()">+ Add Row</button><button
+                        class="action-btn del" onclick="delRow()">- Delete Row</button></div>
+                <p class="incident-resize-hint" style="margin: 0 0 8px 0; font-size: 9pt; color: #64748b;">Drag the
+                    line between column headers to adjust column widths (applies to all incident pages).</p>
+                <div class="box-border incident-table-wrap"
+                    style="padding:0; margin-bottom: 40px; border: 2px solid #000; flex-grow: 0; min-height: fit-content; height: auto;">
+                    <table class="data-table incident-data-table" id="incidentTable">
+                        <colgroup>
+                            <col class="inc-col-sn">
+                            <col class="inc-col-ticket">
+                            <col class="inc-col-sev">
+                            <col class="inc-col-title">
+                            <col class="inc-col-obs">
+                            <col class="inc-col-status">
+                            <col class="inc-col-tfp">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>S.N</th>
+                                <th>Ticket No</th>
+                                <th>Severity</th>
+                                <th>Incident Title</th>
+                                <th>Observation &amp; Recommendation</th>
+                                <th>Status</th>
+                                <th>True/False<br>Positive</th>
+                            </tr>
+                        </thead>
+                        <tbody class="incident-tbody">
+                            <tr>
+                                <td contenteditable="true">1</td>
+                                <td contenteditable="true">#71408</td>
+                                <td contenteditable="true">Medium</td>
+                                <td contenteditable="true">Account Locked: Server</td>
+                                <td contenteditable="true">User account locked out due to multiple failed login attempts. Reset password and
+                                    verify
+                                    user activity.</td>
+                                <td contenteditable="true">Closed</td>
+                                <td contenteditable="true">True Positive</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p id="incidentStatusNote" contenteditable="true"
+                    style="margin-top: 20px; font-weight: bold; font-size: 11pt; color: #555;"></p>
+            </div>
+        </div>
+        <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num">6</span>
+        </div>
+        <div class="footer-strip">
+            <div class="strip-blue"></div>
+            <div class="strip-pink"></div>
+        </div>
+    </div>
+
+    <!-- External JavaScript -->
+    <script src="script.js?v=9"></script>
+</body>
+
+</html>
