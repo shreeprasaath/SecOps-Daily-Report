@@ -964,7 +964,7 @@ function updatePageNumbers() {
 
     const pin = document.createElement('div');
     pin.className = 'end-doc-pin';
-    pin.innerHTML = '<b>← End of Document →</b>';
+    pin.innerHTML = '← End of Document →';
     const footerRow = lastPage.querySelector('.footer-text-row');
     if (footerRow) {
         lastPage.insertBefore(pin, footerRow);
