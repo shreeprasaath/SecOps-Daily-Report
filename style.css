@@ -14,14 +14,14 @@ body {
     padding: 20px;
 }
 
-/* Dashboard Control */
+/* ── Dashboard Control ── */
 .no-print {
     background: #fff;
     padding: 20px;
     border-radius: 8px;
     max-width: 1100px;
     margin: 0 auto 30px auto;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
 
 .config-grid {
@@ -47,7 +47,7 @@ input {
     box-sizing: border-box;
 }
 
-/* Page Structure */
+/* ── Page Structure ── */
 .page {
     background: white;
     width: 210mm;
@@ -59,64 +59,115 @@ input {
     display: flex;
     flex-direction: column;
     page-break-after: always;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    overflow: hidden;
 }
 
-/* PAGE 1: BRANDING */
-.page-cover {
-    text-align: left;
-    padding-top: 5mm;
-    flex-grow: 1;
-}
-
-.page-cover h1 {
-    color: #2e75b6;
-    font-size: 38pt;
-    margin: 0;
-    font-weight: bold;
-}
-
-.bottom-branding {
-    margin-top: auto;
-    padding-bottom: 5mm;
-    width: 100%;
-}
-
-.logo-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    width: 100%;
-    margin-bottom: 12px;
-    padding: 0 1mm;
-}
-
-.logo-box {
-    height: 35mm;
+/* ── SNS Logo on inner pages (absolute, top-right) ── */
+.page-sns-logo {
+    position: absolute;
+    top: 10mm;
+    right: 18mm;
+    height: 20mm;
     width: auto;
-    max-width: 250px;
+    object-fit: contain;
+    z-index: 2;
+}
+
+/* ── PAGE 1: COVER ── */
+.cover-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 5mm;
+    flex-shrink: 0;
+}
+
+.cover-sns-logo {
+    height: 22mm;
+    width: auto;
     object-fit: contain;
 }
 
-.company-name-full {
-    color: #ff0000;
-    font-size: 26pt;
-    font-weight: bold;
-    width: 100%;
-    display: block;
+.cover-body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 20mm;
     text-align: center;
-    white-space: nowrap;
-    letter-spacing: 0.5px;
-    border-top: 2.5px solid #ff0000;
-    padding-top: 8px;
 }
 
-/* TOC & Document Control */
+.cover-title {
+    font-size: 28pt;
+    font-weight: bold;
+    color: #1a1a2e;
+    margin: 0 0 6px 0;
+    text-align: center;
+    outline: none;
+}
+
+.cover-date-line {
+    font-size: 12pt;
+    color: #444;
+    margin: 0 0 18mm 0;
+    text-align: center;
+}
+
+.cover-cust-logo-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 45mm;
+}
+
+.cover-cust-logo {
+    max-height: 50mm;
+    max-width: 100mm;
+    object-fit: contain;
+}
+
+.cover-copyright {
+    margin-top: auto;
+    padding-bottom: 12mm;
+    flex-shrink: 0;
+}
+
+.copyright-heading {
+    font-size: 12pt;
+    margin: 0 0 5px 0;
+}
+
+.copyright-text {
+    font-size: 10pt;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ── Section Headers ── */
+.section-header {
+    font-size: 13pt;
+    font-weight: bold;
+    color: #1F3864;
+    margin-bottom: 8px;
+    margin-top: 0;
+}
+
+.toc-heading {
+    color: #444;
+    font-weight: bold;
+}
+
+/* ── TOC ── */
+.toc-list {
+    margin-top: 10px;
+}
+
 .toc-item {
     display: flex;
     align-items: baseline;
     padding: 10px 0;
-    font-size: 13pt;
+    font-size: 12pt;
     text-decoration: none;
     color: #000;
     cursor: pointer;
@@ -125,25 +176,112 @@ input {
 .toc-dots {
     flex-grow: 1;
     border-bottom: 1px dotted #000;
-    margin: 0 5px;
+    margin: 0 6px;
     height: 1em;
 }
 
+/* ── Document Control Table ── */
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 10px;
 }
 
-.doc-control-table th,
-.doc-control-table td {
-    border: 1px solid black;
-    padding: 10px;
-    text-align: left;
-    font-size: 11pt;
+.doc-control-table {
+    border-top: 1.5px solid #555;
+    border-bottom: 1.5px solid #555;
+    border-left: none;
+    border-right: none;
+    margin-top: 15px;
 }
 
-/* Potential Incident Table (Bordered) */
+.doc-control-table th,
+.doc-control-table td {
+    border: none;
+    border-bottom: 1px solid #ddd;
+    padding: 12px 8px;
+    text-align: left;
+    font-size: 10.5pt;
+}
+
+.doc-control-table thead th {
+    border-bottom: 1px solid #999;
+    font-weight: normal;
+    color: #555;
+}
+
+.doc-control-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ── 50/50 Half-page Layout ── */
+.half-container {
+    height: 46%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 2%;
+    position: relative;
+}
+
+.box-border {
+    border: 1px solid #ccc;
+    padding: 12px;
+    flex-grow: 1;
+    position: relative;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.canvas-wrap {
+    flex-grow: 1;
+    position: relative;
+    min-height: 0;
+}
+
+/* ── EPS Chart bottom legend table ── */
+.eps-chart-box {
+    padding: 10px 12px 0 12px;
+}
+
+.eps-legend-table {
+    width: 60%;
+    margin: 4px auto 6px;
+    border-collapse: collapse;
+    border: 1px solid #ccc;
+    font-size: 9.5pt;
+}
+
+.eps-legend-table th {
+    background: #f2f2f2;
+    padding: 4px 8px;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+    font-weight: normal;
+    color: #444;
+}
+
+.eps-legend-table td {
+    padding: 4px 8px;
+    text-align: center;
+    border: none;
+}
+
+.eps-legend-table td:first-child {
+    border-right: 1px solid #ccc;
+}
+
+.eps-legend-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background: #5b9bd5;
+    vertical-align: middle;
+    margin-right: 3px;
+}
+
+/* ── Potential Incident Table ── */
 .data-table {
     border-collapse: collapse;
     width: 100%;
@@ -152,8 +290,8 @@ table {
 .data-table th,
 .data-table td {
     border: 1px solid #ccc;
-    padding: 8px 10px;
-    font-size: 11pt;
+    padding: 7px 8px;
+    font-size: 10.5pt;
     text-align: left;
 }
 
@@ -177,17 +315,11 @@ table {
     border-bottom: none;
 }
 
-/* Potential Incidents: fixed columns + wrapping so headers/cells stay inside the black border */
+/* Incident table wrapper */
 .incident-table-wrap {
     min-width: 0;
     max-width: 100%;
     box-sizing: border-box;
-    overflow-x: hidden;
-    overflow-y: visible;
-}
-
-.incident-table-wrap.box-border {
-    /* Fit table to page width; column px widths + normalize prevent horizontal scroll */
     overflow-x: hidden;
     overflow-y: visible;
 }
@@ -203,25 +335,45 @@ table {
     word-wrap: break-word;
     overflow-wrap: break-word;
     hyphens: none;
-    text-align: center;
-    vertical-align: middle;
-}
-
-/* Observation & Recommendation: left-aligned (long text reads better) */
-.incident-data-table thead th:nth-child(5),
-.incident-data-table tbody td:nth-child(5) {
     text-align: left;
+    vertical-align: middle;
 }
 
 .incident-data-table th {
     white-space: normal;
     line-height: 1.2;
-    padding: 6px 5px;
+    padding: 6px 6px;
     font-size: 10pt;
     position: relative;
+    text-align: center;
 }
 
-/* Column drag resize (screen only — hidden when printing) */
+.incident-data-table td {
+    font-size: 10pt;
+    padding: 6px 6px;
+}
+
+/* S.No column centered */
+.incident-data-table td:first-child,
+.incident-data-table th:first-child {
+    text-align: center;
+}
+
+/* Status column centered */
+.incident-data-table td:last-child,
+.incident-data-table th:last-child {
+    text-align: center;
+    border-right: 1px solid #ccc;
+}
+
+/* Column widths — 5 columns */
+.inc-col-sn     { width: 6%; }
+.inc-col-ticket { width: 12%; }
+.inc-col-sev    { width: 12%; }
+.inc-col-title  { width: 55%; }
+.inc-col-status { width: 15%; }
+
+/* Column drag resize handle */
 .incident-col-resize-handle {
     position: absolute;
     top: 0;
@@ -235,64 +387,23 @@ table {
 }
 
 .incident-col-resize-handle:hover {
-    background: rgba(46, 117, 182, 0.18);
+    background: rgba(46,117,182,0.18);
 }
 
 .incident-data-table th:last-child .incident-col-resize-handle {
     display: none;
 }
 
-.incident-data-table td {
-    font-size: 10.5pt;
-}
-
-/* Column share of table width (sums to 100%) */
-.inc-col-sn {
-    width: 5%;
-}
-
-.inc-col-ticket {
-    width: 10%;
-}
-
-.inc-col-sev {
-    width: 9%;
-}
-
-.inc-col-title {
-    width: 16%;
-}
-
-.inc-col-obs {
-    width: 34%;
-}
-
-.inc-col-status {
-    width: 10%;
-}
-
-.inc-col-tfp {
-    width: 16%;
-}
-
-/* Keep last column’s right edge visible inside the bordered box */
-.incident-data-table td:last-child,
-.incident-data-table th:last-child {
-    border-right: 1px solid #ccc;
-}
-
-/* Same heading rhythm for main block vs (Continued) pages */
 h3.incident-section-heading {
-    margin-top: 18px;
-    margin-bottom: 10px;
+    margin-top: 12px;
+    margin-bottom: 8px;
 }
 
 .page.incident-page-extra h3.incident-section-heading--continued {
-    margin-top: 12px;
-    margin-bottom: 10px;
+    margin-top: 10px;
+    margin-bottom: 8px;
 }
 
-/* NOTE moved to its own page when the last row is too tall to share the page with the NOTE */
 .page.incident-note-overflow-page {
     display: flex;
     flex-direction: column;
@@ -303,44 +414,10 @@ h3.incident-section-heading {
     max-width: 100%;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    line-height: 1.35;
+    line-height: 1.4;
 }
 
-/* 50/50 Layout */
-.half-container {
-    height: 46%;
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 2%;
-    position: relative;
-}
-
-.box-border {
-    border: 2px solid #000;
-    padding: 15px;
-    flex-grow: 1;
-    position: relative;
-    background: #fff;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.canvas-wrap {
-    flex-grow: 1;
-    position: relative;
-    min-height: 0;
-}
-
-/* FOOTER BRANDING */
-.section-header {
-    font-size: 18pt;
-    font-weight: bold;
-    color: #000;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #eee;
-}
-
+/* ── Footer ── */
 .footer-strip {
     position: absolute;
     bottom: 0;
@@ -350,16 +427,7 @@ h3.incident-section-heading {
     display: flex;
 }
 
-.strip-blue {
-    background: #b4c7e7;
-    width: 45%;
-}
-
-.strip-pink {
-    background: #f8cbad;
-    width: 55%;
-}
-
+/* Cover page footer (coloured) */
 .strip-cover-blue {
     background: #2e358b;
     width: 45%;
@@ -370,6 +438,10 @@ h3.incident-section-heading {
     width: 55%;
 }
 
+/* Inner pages: strip is transparent but keeps height so pagination boundary still works */
+.strip-blue  { background: transparent; width: 45%; }
+.strip-pink  { background: transparent; width: 55%; }
+
 .footer-text-row {
     position: absolute;
     bottom: 45px;
@@ -377,8 +449,7 @@ h3.incident-section-heading {
     right: 20mm;
     display: flex;
     justify-content: space-between;
-    font-size: 10pt;
-    font-weight: bold;
+    font-size: 9.5pt;
 }
 
 .confidential-mark {
@@ -387,9 +458,10 @@ h3.incident-section-heading {
 
 .page-num {
     text-align: right;
+    color: #555;
 }
 
-/* Fixed above footer so it stays visible on continuation / long pages (not pushed below the page box) */
+/* End-of-document pin */
 .end-doc-pin {
     position: absolute;
     left: 20mm;
@@ -397,8 +469,8 @@ h3.incident-section-heading {
     bottom: 88px;
     width: auto;
     text-align: center;
-    font-weight: bold;
-    font-size: 13pt;
+    font-style: italic;
+    font-size: 11pt;
     margin: 0;
     padding: 2px 0;
     z-index: 1;
@@ -406,8 +478,9 @@ h3.incident-section-heading {
     box-sizing: border-box;
 }
 
+/* Dashboard buttons */
 .btn-row {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     display: flex;
     gap: 10px;
 }
@@ -432,7 +505,6 @@ h3.incident-section-heading {
         print-color-adjust: exact !important;
     }
 
-    /* Sharper chart/canvas output in PDF */
     .canvas-wrap canvas {
         image-rendering: -webkit-optimize-contrast;
         image-rendering: crisp-edges;
