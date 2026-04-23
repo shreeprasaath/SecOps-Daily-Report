@@ -1,3 +1,4 @@
 # Keep only root-level app files in the repo; ignore local assets and generated reports
 Logo/
 Report/
+RMZ_template.pdf
