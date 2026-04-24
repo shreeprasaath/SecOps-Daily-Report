@@ -332,16 +332,15 @@ table {
 
 .incident-data-table th,
 .incident-data-table td {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
     hyphens: none;
     text-align: left;
     vertical-align: top;
 }
 
+/* Headers: never break mid-word */
 .incident-data-table th {
-    white-space: normal;
+    white-space: nowrap;
+    overflow: hidden;
     line-height: 1.2;
     padding: 6px 6px;
     font-size: 10pt;
@@ -349,9 +348,13 @@ table {
     text-align: center;
 }
 
+/* Data cells: wrap long text to next line, never overflow */
 .incident-data-table td {
     font-size: 10pt;
     padding: 6px 6px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 /* S.No column centered */
@@ -369,9 +372,9 @@ table {
 
 /* Column widths — 5 columns */
 .inc-col-sn     { width: 6%; }
-.inc-col-ticket { width: 12%; }
-.inc-col-sev    { width: 12%; }
-.inc-col-title  { width: 52%; }
+.inc-col-ticket { width: 16%; }
+.inc-col-sev    { width: 14%; }
+.inc-col-title  { width: 46%; }
 .inc-col-status { width: 18%; }
 
 /* Column drag resize handle */
