@@ -100,7 +100,7 @@ function escapeHtmlCell(val) {
 
 /** Drag resize between column headers (Potential Incidents tables only). */
 const INCIDENT_COL_MIN_PX = 40;
-const DEFAULT_INCIDENT_COL_FRACS = [0.04, 0.10, 0.11, 0.22, 0.41, 0.12];
+const DEFAULT_INCIDENT_COL_FRACS = [0.06, 0.13, 0.13, 0.52, 0.16];
 
 function getIncidentDataTables() {
     return document.querySelectorAll('.incident-table-wrap table.incident-data-table');
@@ -110,8 +110,8 @@ function ensureIncidentColgroup(table) {
     let cg = table.querySelector('colgroup');
     if (!cg) {
         cg = document.createElement('colgroup');
-        const cls = ['inc-col-sn', 'inc-col-ticket', 'inc-col-sev', 'inc-col-title', 'inc-col-obs', 'inc-col-status'];
-        for (let i = 0; i < 6; i++) {
+        const cls = ['inc-col-sn', 'inc-col-ticket', 'inc-col-sev', 'inc-col-title', 'inc-col-status'];
+        for (let i = 0; i < 5; i++) {
             const col = document.createElement('col');
             col.className = cls[i];
             cg.appendChild(col);
@@ -131,9 +131,9 @@ function incidentTableInnerWidth(table) {
 
 function readIncidentColWidthsPx(table) {
     const cols = table.querySelectorAll('colgroup col');
-    if (cols.length !== 6) return null;
+    if (cols.length !== 5) return null;
     const out = [];
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 5; i++) {
         const px = parseFloat(cols[i].style.width);
         if (!px || px <= 0) return null;
         out.push(px);
@@ -145,7 +145,7 @@ function applyIncidentColWidthsPx(widthsPx) {
     getIncidentDataTables().forEach(function (table) {
         ensureIncidentColgroup(table);
         const cols = table.querySelectorAll('colgroup col');
-        if (cols.length !== 6) return;
+        if (cols.length !== 5) return;
         widthsPx.forEach(function (px, i) {
             cols[i].style.width = Math.max(INCIDENT_COL_MIN_PX, Math.round(px)) + 'px';
         });
@@ -155,7 +155,7 @@ function applyIncidentColWidthsPx(widthsPx) {
 function normalizeIncidentColWidths(table) {
     ensureIncidentColgroup(table);
     const cols = table.querySelectorAll('colgroup col');
-    if (cols.length !== 6) return;
+    if (cols.length !== 5) return;
     const w = table.clientWidth || table.getBoundingClientRect().width;
     if (!w || w < 80) return;
     let widths = Array.from(cols).map(function (c) {
@@ -199,7 +199,7 @@ function initIncidentColumnResize(table) {
     const theadRow = table.querySelector('thead tr');
     if (!theadRow) return;
     const ths = theadRow.querySelectorAll('th');
-    if (ths.length !== 6) return;
+    if (ths.length !== 5) return;
 
     ensureIncidentColgroup(table);
     const firstInited = Array.from(getIncidentDataTables()).find(function (t) {
@@ -309,7 +309,6 @@ function addRow() {
         + '<td contenteditable="true">#</td>'
         + '<td contenteditable="true">High</td>'
         + '<td contenteditable="true">New Incident</td>'
-        + '<td contenteditable="true"></td>'
         + '<td contenteditable="true">Open</td>'
         + '</tr>';
     lastTbody.insertAdjacentHTML('beforeend', row);
@@ -360,7 +359,7 @@ function refreshBluPineChart() {
 
     const titles = {};
     document.querySelectorAll('.incident-tbody tr').forEach(tr => {
-        if (tr.cells.length > 4) {
+        if (tr.cells.length > 3) {
             let title = tr.cells[3].innerText.trim();
             if (title && title !== '#' && title !== 'Enter observation...' && title !== '-' && title !== 'New Incident') {
                 titles[title] = (titles[title] || 0) + 1;
@@ -506,9 +505,9 @@ function getIncidentNoteReservePx() {
     let hasClosed = false;
     let rowsExist = false;
     document.querySelectorAll('.incident-tbody tr').forEach(function (tr) {
-        if (tr.cells.length > 4) {
+        if (tr.cells.length > 3) {
             rowsExist = true;
-            const status = tr.cells[5].innerText.trim().toLowerCase();
+            const status = tr.cells[4].innerText.trim().toLowerCase();
             if (status.includes('open')) hasOpen = true;
             if (status.includes('close')) hasClosed = true;
         }
@@ -789,7 +788,6 @@ function createNewIncidentPage(afterPage) {
                         <col class="inc-col-ticket">
                         <col class="inc-col-sev">
                         <col class="inc-col-title">
-                        <col class="inc-col-obs">
                         <col class="inc-col-status">
                     </colgroup>
                     <thead>
@@ -798,7 +796,6 @@ function createNewIncidentPage(afterPage) {
                             <th>Ticket No</th>
                             <th>Severity</th>
                             <th>Incident Title</th>
-                            <th>Observation &amp; Recommendation</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -833,7 +830,7 @@ function updateIncidentNote() {
     document.querySelectorAll('.incident-tbody tr').forEach(tr => {
         if (tr.cells.length > 5) {
             rowsExist = true;
-            let status = tr.cells[5].innerText.trim().toLowerCase();
+            let status = tr.cells[4].innerText.trim().toLowerCase();
             if (status.includes('open')) hasOpen = true;
             if (status.includes('close')) hasClosed = true;
         }
@@ -1234,22 +1231,16 @@ document.getElementById('incidentCsv').addEventListener('change', function (e) {
 
             const ticketCol = headers.find(h => h.toUpperCase().includes("TICKET")) || "Ticket No";
             const titleCol = headers.find(h => h.toUpperCase().includes("INCIDENT TITLE") || h.toUpperCase() === "TITLE" || h.toUpperCase() === "ALERT NAME") || "Incident Title";
-            const obsCol = headers.find(h => h.toUpperCase().includes("OBSERVATION")) || "Observation & Recommendation";
             const statusCol = headers.find(h => h.toUpperCase() === "STATUS") || "Status";
 
             let currentTbody = document.querySelector('.incident-tbody');
             if (results.data.length > 0) {
                 results.data.forEach((row, i) => {
-                    const obsRaw = row[obsCol] || '';
-                    const obsHtml = escapeHtmlCell(obsRaw)
-                        .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
-                        .replace(/\n/g, '<br>');
                     const tr = '<tr>'
                         + `<td contenteditable="true">${i + 1}</td>`
                         + `<td contenteditable="true">${escapeHtmlCell(row[ticketCol] || '#')}</td>`
                         + `<td contenteditable="true">${escapeHtmlCell(row[sevCol] || 'N/A')}</td>`
                         + `<td contenteditable="true">${escapeHtmlCell(row[titleCol] || 'N/A')}</td>`
-                        + `<td contenteditable="true">${obsHtml}</td>`
                         + `<td contenteditable="true">${escapeHtmlCell(row[statusCol] || 'Open')}</td>`
                         + '</tr>';
                     currentTbody.insertAdjacentHTML('beforeend', tr);
@@ -1260,7 +1251,6 @@ document.getElementById('incidentCsv').addEventListener('change', function (e) {
                     + '<td contenteditable="true">#</td>'
                     + '<td contenteditable="true">High</td>'
                     + '<td contenteditable="true">New Incident</td>'
-                    + '<td contenteditable="true"></td>'
                     + '<td contenteditable="true">Open</td>'
                     + '</tr>';
             }
