@@ -1027,27 +1027,27 @@ function draw3DEPSChart(canvasEl, value, custName, ratio) {
     ctx.font = 'bold 14px Calibri, Arial, sans-serif';
     ctx.fillStyle = '#222';
     ctx.textAlign = 'center';
-    ctx.fillText(custName, padL + chartW / 2, 21);
+    ctx.fillText(custName, padL + (chartW + dX) / 2, 21);
 
-    // ── Back-wall fill (rectangle) ───────────────────────────────────────
+    // ── Back-wall fill (full width including 3D depth) ───────────────────
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(padL, padT, chartW, chartH);
+    ctx.fillRect(padL, padT, chartW + dX, chartH);
 
-    // ── Horizontal grid lines ────────────────────────────────────────────
+    // ── Horizontal grid lines (full width including 3D depth) ────────────
     ctx.strokeStyle = '#c8c8c8';
     ctx.lineWidth = 0.7;
     for (let v = 0; v <= maxY; v += 20) {
         const yFront = scY(v);
         ctx.beginPath();
         ctx.moveTo(padL, yFront);
-        ctx.lineTo(padL + chartW, yFront);
+        ctx.lineTo(padL + chartW + dX, yFront);
         ctx.stroke();
     }
 
-    // ── Back-wall border outline (rectangle) ─────────────────────────────
+    // ── Border (full width including 3D depth) ────────────────────────────
     ctx.strokeStyle = '#b0b0b0';
     ctx.lineWidth = 0.8;
-    ctx.strokeRect(padL, padT, chartW, chartH);
+    ctx.strokeRect(padL, padT, chartW + dX, chartH);
 
     // ── Y-axis labels ────────────────────────────────────────────────────
     ctx.font = '11px Calibri, Arial, sans-serif';
