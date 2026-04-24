@@ -366,14 +366,13 @@ table {
     border-right: 1px solid #ccc;
 }
 
-/* Column widths — 7 columns */
+/* Column widths — 6 columns */
 .inc-col-sn     { width: 4%; }
 .inc-col-ticket { width: 10%; }
 .inc-col-sev    { width: 9%; }
 .inc-col-title  { width: 22%; }
-.inc-col-obs    { width: 37%; }
+.inc-col-obs    { width: 46%; }
 .inc-col-status { width: 9%; }
-.inc-col-tfp    { width: 9%; }
 
 /* Column drag resize handle */
 .incident-col-resize-handle {
