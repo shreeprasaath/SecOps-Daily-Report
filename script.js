@@ -100,7 +100,7 @@ function escapeHtmlCell(val) {
 
 /** Drag resize between column headers (Potential Incidents tables only). */
 const INCIDENT_COL_MIN_PX = 40;
-const DEFAULT_INCIDENT_COL_FRACS = [0.06, 0.13, 0.13, 0.52, 0.16];
+const DEFAULT_INCIDENT_COL_FRACS = [0.06, 0.12, 0.12, 0.52, 0.18];
 
 function getIncidentDataTables() {
     return document.querySelectorAll('.incident-table-wrap table.incident-data-table');

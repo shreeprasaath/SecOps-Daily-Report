@@ -334,11 +334,10 @@ table {
 .incident-data-table td {
     word-wrap: break-word;
     overflow-wrap: break-word;
+    word-break: break-word;
     hyphens: none;
     text-align: left;
-    vertical-align: middle;
-    overflow: hidden;
-    max-width: 0;
+    vertical-align: top;
 }
 
 .incident-data-table th {
@@ -368,21 +367,12 @@ table {
     border-right: 1px solid #ccc;
 }
 
-/* Prevent word-wrap in severity and status columns */
-.incident-data-table td:nth-child(3),
-.incident-data-table th:nth-child(3),
-.incident-data-table td:nth-child(5),
-.incident-data-table th:nth-child(5) {
-    white-space: nowrap;
-    overflow: hidden;
-}
-
 /* Column widths — 5 columns */
 .inc-col-sn     { width: 6%; }
-.inc-col-ticket { width: 13%; }
-.inc-col-sev    { width: 13%; }
+.inc-col-ticket { width: 12%; }
+.inc-col-sev    { width: 12%; }
 .inc-col-title  { width: 52%; }
-.inc-col-status { width: 16%; }
+.inc-col-status { width: 18%; }
 
 /* Column drag resize handle */
 .incident-col-resize-handle {
