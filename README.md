@@ -239,3 +239,241 @@ When you open `index.html` in the browser, the **white panel at the very top** i
 ---
 
 *Continue to [Section 3 — Report Pages Explained](#3-report-pages-explained)*
+
+---
+
+## 3. Report Pages Explained
+
+The report is made up of **6 fixed pages** (Pages 1–6) plus any number of **auto-generated overflow pages** when the incident table is too long. Every page is sized exactly to **A4 (210mm × 297mm)** so it prints perfectly without any scaling.
+
+Below is a page-by-page breakdown of what each page contains, what is editable, and what is auto-generated.
+
+---
+
+### Page 1 — Cover Page
+
+```
+┌──────────────────────────────────────┐
+│                        [ SNS Logo ]  │
+│                                      │
+│                                      │
+│      RMZ Corp. - SOC Daily Report    │  ← Editable (click to type)
+│      For the Date: 23-04-2026        │  ← Auto-generated (yesterday's date)
+│                                      │
+│           [ Customer Logo ]          │  ← Uploaded via dashboard
+│                                      │
+│                                      │
+│  Copyright and Confidential Notice:  │  ← Editable block
+│  ©2026 Secure Network Solutions...   │
+│                                      │
+├──────────────────────────────────────┤
+│ ██████████████████ ████████████████ │  ← Blue | Red footer strip
+└──────────────────────────────────────┘
+```
+
+| Element | How it gets its value |
+|---------|----------------------|
+| SNS Logo | Uploaded via dashboard |
+| Report title | Auto-set from Customer Name field; click to edit further |
+| Date line | Auto-set to **yesterday's date** (n−1 logic) in `DD-MM-YYYY` format; click to edit |
+| Customer Logo | Uploaded via dashboard |
+| Copyright block | Click anywhere in the block to edit the text |
+| Footer strip | Decorative only — blue (45%) + red (55%) bars |
+
+> **Why yesterday's date?** SOC daily reports typically cover the previous 24-hour window (e.g. a report prepared on 24-Apr covers 23-Apr 9 PM to 24-Apr 9 PM). The tool sets the date automatically so analysts do not have to remember.
+
+---
+
+### Page 2 — Document Control
+
+```
+┌──────────────────────────────────────┐
+│                        [ SNS Logo ]  │
+│  Document Control                    │
+│  ────────────────────────────────── │
+│  Field                  Details      │
+│  ────────────────────────────────── │
+│  Title                  RMZ Corp...  │
+│  Document Version       1.0          │
+│  Document Prepared By   Amirdeshwara │
+│  Document Prepared On   24/04/2026   │  ← Auto-generated
+│  Document Reviewed By   Kishore Kumar│
+│  Document Approved By   Diptesh Saha │
+│  ────────────────────────────────── │
+│                                      │
+│  Confidential                      2 │
+└──────────────────────────────────────┘
+```
+
+| Element | How it gets its value |
+|---------|----------------------|
+| Title | Auto-set from Customer Name field |
+| Document Version | Fixed as `1.0` — edit directly in the table |
+| Document Prepared By | Fixed as `Amirdeshwara R` — edit directly in the table |
+| Document Prepared On | **Auto-generated** — today's date + time range (e.g. `24/04/2026 (09 PM 23 Apr to 09 PM 24 Apr)`) |
+| Document Reviewed By | Fixed as `Kishore Kumar K` — edit directly in the table |
+| Document Approved By | Fixed as `Diptesh Saha` — edit directly in the table |
+| Page number | Auto-assigned |
+
+> The entire table has `contenteditable="true"` — click any cell value to change it.
+
+---
+
+### Page 3 — Table of Contents
+
+```
+┌──────────────────────────────────────┐
+│                        [ SNS Logo ]  │
+│  Table of Contents                   │
+│                                      │
+│  1. Daily Average EPS .......... 4   │
+│  2. Reporting Device - Avg EPS .. 4  │
+│  3. Incident Severity Count ..... 5  │
+│  4. False Positive & True Positive 5 │
+│  5. Potential Incidents ......... 6  │  ← Becomes "6." for BluPine
+│                                      │
+│  Confidential                      3 │
+└──────────────────────────────────────┘
+```
+
+| Element | How it gets its value |
+|---------|----------------------|
+| Section entries | Fixed text — edit by clicking any line |
+| Page numbers (right side) | **Auto-updated** every time the layout changes |
+| Section 5 vs Section 6 | Automatically changes to 6 when BluPine mode is active |
+| BluPine extra item | Hidden by default; appears automatically for BluPine customers |
+
+> The dotted leader lines (`. . . . .`) between the section name and page number are drawn with CSS — they expand and contract automatically to fill the space.
+
+---
+
+### Page 4 — Charts: Daily EPS & Device EPS
+
+```
+┌──────────────────────────────────────┐
+│                        [ SNS Logo ]  │
+│  1. Daily Average EPS                │
+│  ┌────────────────────────────────┐  │
+│  │     [  3D Bar Chart  ]         │  │
+│  │  ┌──────────────┐              │  │
+│  │  │ AVG EPS      │              │  │
+│  │  │ RMZ Corp. 82 │              │  │
+│  │  └──────────────┘              │  │
+│  └────────────────────────────────┘  │
+│  2. Reporting Device - Average EPS   │
+│  ┌────────────────────────────────┐  │
+│  │   [  Bar Chart — Devices  ]    │  │
+│  └────────────────────────────────┘  │
+│  Confidential                      4 │
+└──────────────────────────────────────┘
+```
+
+Each chart takes up roughly half the page height (46% each with a small gap).
+
+| Section | Data source | Chart type |
+|---------|------------|-----------|
+| 1. Daily Average EPS | EPS input field + Customer Name field | Custom 3D bar (Canvas API) |
+| 2. Reporting Device — Average EPS | Device CSV upload | Chart.js grouped bar |
+
+See [Section 5 — Charts Explained](#5-charts-explained) for deep detail on how each chart works.
+
+---
+
+### Page 5 — Charts: Severity & True/False Positive
+
+```
+┌──────────────────────────────────────┐
+│                        [ SNS Logo ]  │
+│  3. Incident Severity Count          │
+│  ┌────────────────────────────────┐  │
+│  │  [ Bar Chart: High/Med/Low ]   │  │
+│  └────────────────────────────────┘  │
+│  4. False Positive & True Positive   │
+│  ┌────────────────────────────────┐  │
+│  │  [ Bar Chart: TP by Severity ] │  │
+│  └────────────────────────────────┘  │
+│  False Positive:                     │
+│  No False positive incidents...      │  ← Auto-generated text
+│                                      │
+│  Confidential                      5 │
+└──────────────────────────────────────┘
+```
+
+| Section | Data source | Shown when |
+|---------|------------|-----------|
+| 3. Incident Severity Count | Analytics CSV — `Severity` column | Any HIGH/MEDIUM/LOW found |
+| 4. True Positive chart | Analytics CSV — `Resolution` column (looks for "true positive"/"tp") | Any TP found |
+| False Positive text | Analytics CSV — `Resolution` column (looks for "false positive"/"fp") | Always shown |
+
+**Blank-state messages:** If no CSV is uploaded yet, each section shows a message like:
+> *"No potential incidents have been observed from 23-04-2026 9:00 PM to 24-04-2026 9:00 PM."*
+
+---
+
+### Page 6 — Potential Incidents
+
+```
+┌──────────────────────────────────────┐
+│                        [ SNS Logo ]  │
+│  5. Potential Incidents              │
+│  [+ Add Row]  [- Delete Row]         │  ← Hidden in print
+│  Drag between column headers...      │  ← Hidden in print
+│  ┌────┬──────────┬────────┬──────────────────────────────┬────────┐ │
+│  │S.No│ Ticket No│Severity│       Incident Title          │ Status │ │
+│  ├────┼──────────┼────────┼──────────────────────────────┼────────┤ │
+│  │ 1  │ #75509   │ Medium │ Office365: Brute Force...     │  Open  │ │
+│  │ 2  │ #75533   │ Medium │ Safetica Sensitive Data...    │  Open  │ │
+│  └────┴──────────┴────────┴──────────────────────────────┴────────┘ │
+│                                      │
+│  NOTE: We have shared the remediation│  ← Auto-generated based on Status
+│  details with the customer...        │
+│                                      │
+│  Confidential                      6 │
+└──────────────────────────────────────┘
+```
+
+**Columns and their widths:**
+
+| Column | Default Width | Notes |
+|--------|--------------|-------|
+| S.No | 6% | Auto-renumbers when rows are added/deleted |
+| Ticket No | 16% | Editable; draggable to resize |
+| Severity | 14% | Editable; draggable to resize |
+| Incident Title | 46% | Long text wraps to next line within the cell |
+| Status | 18% | Drives the auto-generated NOTE text |
+
+**Auto-generated NOTE paragraph:**
+- If any row has Status containing `open` → *"NOTE: We have shared the remediation details with the customer, and the action is currently pending on their side."*
+- If any row has Status containing `close` → *"NOTE: We have shared the remediation details with the customer, and the action is taken/Confirmed by the customer as a legitimate."*
+- If no rows or no recognisable status → NOTE is hidden automatically.
+
+---
+
+### Overflow Pages — Potential Incidents (Continued)
+
+When the incident table has more rows than fit on Page 6, the tool **automatically creates extra pages**:
+
+```
+┌──────────────────────────────────────┐
+│                        [ SNS Logo ]  │
+│  5. Potential Incidents (Continued)  │
+│  ┌────┬──────────┬────────┬──────────────────────────────┬────────┐ │
+│  │S.No│ Ticket No│Severity│       Incident Title          │ Status │ │
+│  ├────┼──────────┼────────┼──────────────────────────────┼────────┤ │
+│  │ 8  │ #75541   │  High  │ Suspicious Login Detected...  │ Closed │ │
+│  └────┴──────────┴────────┴──────────────────────────────┴────────┘ │
+│                                      │
+│  NOTE: ...                           │  ← Moves here if needed
+│  Confidential                      7 │
+└──────────────────────────────────────┘
+```
+
+- The heading reads **"5. Potential Incidents (Continued)"** — or **"6."** for BluPine.
+- The table header row (S.No, Ticket No, etc.) is repeated on every continuation page.
+- Serial numbers continue from the previous page (e.g. if Page 6 ends at row 7, the next page starts at row 8).
+- If rows are deleted and a continuation page becomes empty, it is **automatically removed**.
+- The NOTE paragraph moves to a dedicated overflow page if it would overlap the footer.
+
+---
+
+*Continue to [Section 4 — Interactive Features](#4-interactive-features)*
