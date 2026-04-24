@@ -1,5 +1,6 @@
 const ChartDataLabels = window.ChartDataLabels;
 Chart.register(ChartDataLabels);
+Chart.defaults.animation = false;
 let activeCharts = {};
 const themeColors = ['#5b9bd5', '#ed7d31', '#a5a5a5', '#ffc000', '#4472c4', '#70ad47', '#255e91', '#9e480e', '#636363', '#997300'];
 
@@ -1358,10 +1359,4 @@ window.onload = () => {
 
     sync();
     updatePageNumbers();
-
-    document.addEventListener('input', function (e) {
-        if (e.target.closest('.incident-tbody')) {
-            managePagination();
-        }
-    });
 };

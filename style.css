@@ -61,6 +61,7 @@ input {
     page-break-after: always;
     box-shadow: 0 0 15px rgba(0,0,0,0.5);
     overflow: hidden;
+    contain: layout style;
 }
 
 /* ── SNS Logo on inner pages (absolute, top-right) ── */
@@ -501,6 +502,12 @@ h3.incident-section-heading {
 
 .action-btn.del {
     background: #d9534f;
+}
+
+/* Promote chart canvases to GPU compositor layers — prevents main-thread repaint during scroll */
+canvas {
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 @media print {
