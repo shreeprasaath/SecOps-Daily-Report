@@ -366,13 +366,22 @@ table {
     border-right: 1px solid #ccc;
 }
 
+/* Prevent word-wrap in short fixed-value columns */
+.incident-data-table td:nth-child(3),
+.incident-data-table th:nth-child(3),
+.incident-data-table td:nth-child(6),
+.incident-data-table th:nth-child(6) {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 /* Column widths — 6 columns */
 .inc-col-sn     { width: 4%; }
 .inc-col-ticket { width: 10%; }
-.inc-col-sev    { width: 9%; }
+.inc-col-sev    { width: 11%; }
 .inc-col-title  { width: 22%; }
-.inc-col-obs    { width: 46%; }
-.inc-col-status { width: 9%; }
+.inc-col-obs    { width: 41%; }
+.inc-col-status { width: 12%; }
 
 /* Column drag resize handle */
 .incident-col-resize-handle {
