@@ -366,22 +366,21 @@ table {
     border-right: 1px solid #ccc;
 }
 
-/* Prevent word-wrap in short fixed-value columns */
+/* Prevent word-wrap in severity and status columns */
 .incident-data-table td:nth-child(3),
 .incident-data-table th:nth-child(3),
-.incident-data-table td:nth-child(6),
-.incident-data-table th:nth-child(6) {
+.incident-data-table td:nth-child(5),
+.incident-data-table th:nth-child(5) {
     white-space: nowrap;
     overflow: hidden;
 }
 
-/* Column widths — 6 columns */
-.inc-col-sn     { width: 4%; }
-.inc-col-ticket { width: 10%; }
-.inc-col-sev    { width: 11%; }
-.inc-col-title  { width: 22%; }
-.inc-col-obs    { width: 41%; }
-.inc-col-status { width: 12%; }
+/* Column widths — 5 columns */
+.inc-col-sn     { width: 6%; }
+.inc-col-ticket { width: 13%; }
+.inc-col-sev    { width: 13%; }
+.inc-col-title  { width: 52%; }
+.inc-col-status { width: 16%; }
 
 /* Column drag resize handle */
 .incident-col-resize-handle {
