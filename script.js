@@ -122,6 +122,12 @@ function ensureIncidentColgroup(table) {
 }
 
 function incidentTableInnerWidth(table) {
+    // Use the wrapper's width, not the table's — the table may already be overflowed
+    const wrap = table.closest('.incident-table-wrap');
+    if (wrap) {
+        const cw = wrap.clientWidth || wrap.getBoundingClientRect().width;
+        if (cw > 1) return cw;
+    }
     const w = table.getBoundingClientRect().width;
     if (w > 1) return w;
     const ow = table.offsetWidth;
@@ -156,41 +162,25 @@ function normalizeIncidentColWidths(table) {
     ensureIncidentColgroup(table);
     const cols = table.querySelectorAll('colgroup col');
     if (cols.length !== 5) return;
-    const w = table.clientWidth || table.getBoundingClientRect().width;
+    const w = incidentTableInnerWidth(table);
     if (!w || w < 80) return;
-    let widths = Array.from(cols).map(function (c) {
-        return parseFloat(c.style.width) || 0;
-    });
-    let sum = widths.reduce(function (a, b) {
-        return a + b;
-    }, 0);
-    if (sum < 1) {
-        widths = DEFAULT_INCIDENT_COL_FRACS.map(function (f) {
-            return f * w;
-        });
-        sum = widths.reduce(function (a, b) {
-            return a + b;
-        }, 0);
+
+    let widths = Array.from(cols).map(function (c) { return parseFloat(c.style.width) || 0; });
+    const sum = widths.reduce(function (a, b) { return a + b; }, 0);
+
+    // If stored widths are missing or more than 5% off the container, reset to defaults
+    if (sum < 1 || Math.abs(sum - w) > w * 0.05) {
+        widths = DEFAULT_INCIDENT_COL_FRACS.map(function (f) { return f * w; });
+    } else {
+        const scale = w / sum;
+        widths = widths.map(function (x) { return x * scale; });
     }
-    const scale = w / sum;
-    widths = widths.map(function (x) {
-        return Math.max(INCIDENT_COL_MIN_PX * 0.85, x * scale);
-    });
-    sum = widths.reduce(function (a, b) {
-        return a + b;
-    }, 0);
-    if (sum > w) {
-        const s2 = w / sum;
-        widths = widths.map(function (x) {
-            return Math.floor(x * s2);
-        });
-        sum = widths.reduce(function (a, b) {
-            return a + b;
-        }, 0);
-    }
-    if (sum < w) {
-        widths[4] += w - sum;
-    }
+
+    // Floor all widths and give any remaining pixel to the last column
+    widths = widths.map(function (x) { return Math.floor(x); });
+    const newSum = widths.reduce(function (a, b) { return a + b; }, 0);
+    widths[widths.length - 1] += w - newSum;
+
     applyIncidentColWidthsPx(widths);
 }
 
