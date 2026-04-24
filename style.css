@@ -68,7 +68,7 @@ input {
     position: absolute;
     top: 10mm;
     right: 18mm;
-    height: 20mm;
+    height: 13mm;
     width: auto;
     object-fit: contain;
     z-index: 2;
@@ -366,12 +366,14 @@ table {
     border-right: 1px solid #ccc;
 }
 
-/* Column widths — 5 columns */
-.inc-col-sn     { width: 6%; }
-.inc-col-ticket { width: 12%; }
-.inc-col-sev    { width: 12%; }
-.inc-col-title  { width: 55%; }
-.inc-col-status { width: 15%; }
+/* Column widths — 7 columns */
+.inc-col-sn     { width: 4%; }
+.inc-col-ticket { width: 10%; }
+.inc-col-sev    { width: 9%; }
+.inc-col-title  { width: 22%; }
+.inc-col-obs    { width: 37%; }
+.inc-col-status { width: 9%; }
+.inc-col-tfp    { width: 9%; }
 
 /* Column drag resize handle */
 .incident-col-resize-handle {
