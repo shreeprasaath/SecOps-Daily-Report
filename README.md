@@ -477,3 +477,163 @@ When the incident table has more rows than fit on Page 6, the tool **automatical
 ---
 
 *Continue to [Section 4 — Interactive Features](#4-interactive-features)*
+
+---
+
+## 4. Interactive Features
+
+The report is fully interactive in the browser before you print. This section covers every interactive behaviour — what triggers it, what it does, and what to expect.
+
+---
+
+### 4.1 Editable Text (Click to Edit)
+
+Almost every piece of text in the report can be edited directly in the browser — no separate input fields needed. These elements have `contenteditable="true"` set on them in the HTML.
+
+**Editable areas include:**
+- Cover page title (customer name + report title)
+- Cover page date
+- Cover page copyright block
+- Every cell in the Document Control table (Page 2)
+- Every cell in the Potential Incidents table (Page 6)
+- The auto-generated NOTE paragraph below the incidents table
+
+**How to edit:**
+1. Click on the text you want to change
+2. A cursor appears — type normally
+3. Click outside when done
+
+> **Tip:** Changes you make by clicking and typing are **not saved to a file**. If you refresh the browser, they will be lost. Always export your PDF before closing or refreshing.
+
+---
+
+### 4.2 Adding and Deleting Incident Rows
+
+Two buttons appear above the incident table on Page 6 (hidden in print):
+
+| Button | What it does |
+|--------|-------------|
+| `+ Add Row` | Appends a new blank row at the bottom of the last incident table. S.No auto-increments. Default values: `#` for Ticket, `High` for Severity, `New Incident` for Title, `Open` for Status |
+| `- Delete Row` | Removes the last row. If only one row remains, it clears the cell contents instead of deleting the row (the table always keeps at least one row) |
+
+**Serial number (S.No) behaviour:**
+- Numbers are assigned automatically across all pages (including continuation pages)
+- Adding, deleting, or moving rows due to pagination always re-runs the numbering from 1
+- You do not need to manually update S.No
+
+---
+
+### 4.3 Column Resizing (Drag to Resize)
+
+You can drag the boundary between any two column headers in the incident table to change their widths.
+
+**How to use:**
+1. Hover over the right edge of a column header — the cursor changes to a resize arrow (`↔`)
+2. Click and drag left or right
+3. Release — the new widths are applied instantly
+
+**Rules:**
+- No column can be made smaller than **40px** (a minimum is enforced)
+- Resizing one column takes space from the adjacent column to the right
+- The last column (Status) cannot be dragged from its right edge
+- All continuation pages (if any) update to the same widths simultaneously
+
+**Default column widths** (as percentage of table width):
+
+| Column | Default |
+|--------|---------|
+| S.No | 6% |
+| Ticket No | 16% |
+| Severity | 14% |
+| Incident Title | 46% |
+| Status | 18% |
+
+If the window is resized or the page layout changes, column widths are automatically re-scaled proportionally so the table never overflows its container.
+
+---
+
+### 4.4 Keyboard Shortcuts Inside the Incident Table
+
+When your cursor is inside a cell of the incident table, these keys have special behaviour:
+
+| Key | What it does |
+|-----|-------------|
+| `Enter` | Inserts a **line break within the same cell** (does not move to the next row). This lets you write multi-line content in a single cell. |
+| `Tab` | Moves focus to the **next cell** to the right. At the last cell of a row, wraps to the first cell of the next row. |
+| `Shift + Tab` | Moves focus to the **previous cell** to the left. |
+
+> **Why does Enter not go to the next row?** In a report table, cells often need multi-line content (e.g. a long incident title). Using Enter for line breaks is more useful here than moving between rows.
+
+---
+
+### 4.5 Auto Pagination
+
+As you add rows, type long content, or upload a CSV with many incidents, the tool automatically manages how the table flows across pages.
+
+**How it works step by step:**
+1. Every time content changes inside the incident table, a **300ms debounce timer** starts
+2. After 300ms of no changes, the pagination engine (`managePagination()`) runs
+3. It measures whether the last row in the table overflows past the footer boundary
+4. If a row overflows → it is **moved to the next page** (creating a new page if one does not exist yet)
+5. If rows move back up and a page becomes empty → the empty page is **automatically deleted**
+6. Serial numbers are re-assigned across all pages
+7. Page numbers in the footer and TOC are updated
+
+**What triggers pagination:**
+- Typing inside any incident table cell
+- Adding or deleting a row (`+ Add Row` / `- Delete Row`)
+- Uploading a new Analytics CSV
+- Text wrapping — when a long word causes a row to grow taller, the ResizeObserver detects the height change and re-runs pagination automatically
+
+**Continuation page structure:**
+- Each new page gets the same table header (S.No, Ticket No, Severity, Incident Title, Status)
+- The heading reads **"5. Potential Incidents (Continued)"**
+- The NOTE paragraph moves to the bottom of the **last** page that has table rows
+
+---
+
+### 4.6 BluPine Mode
+
+BluPine is a special customer layout. It activates automatically when the **Customer Name** field contains the word `blupine` (case-insensitive — `BluPine`, `BLUPINE`, `blupine corp` all work).
+
+**What changes in BluPine mode:**
+
+| Element | Normal mode | BluPine mode |
+|---------|------------|-------------|
+| Section numbering | Incidents = Section 5 | Incidents = Section 6 |
+| TOC | 5 items | 6 items (extra BluPine chart item) |
+| Page 6 | Incidents table only | BluPine chart + Incidents table |
+| BluPine chart | Hidden | Visible — "Potential Incidents with Count" |
+
+**The BluPine chart** ("Potential Incidents with Count"):
+- Reads the **Incident Title** column from the incidents table
+- Groups rows by title and counts how many times each appears
+- Displays one bar per unique incident title, coloured differently
+- Updates live as you add/edit/delete rows
+- If all incident titles are blank or placeholder values, the chart is hidden and a blank-state message is shown instead
+
+**To turn off BluPine mode:** Simply change the customer name to something that does not contain `blupine`.
+
+---
+
+### 4.7 Auto-Generated Status NOTE
+
+Below the last incidents table, the tool automatically writes a NOTE paragraph based on the values in the **Status** column.
+
+**Logic:**
+
+| Condition | NOTE text shown |
+|-----------|----------------|
+| Any row has Status containing `open` | *"NOTE: We have shared the remediation details with the customer, and the action is currently pending on their side."* |
+| Any row has Status containing `close` | *"NOTE: We have shared the remediation details with the customer, and the action is taken/Confirmed by the customer as a legitimate."* |
+| Both open and closed rows exist | The `open` version takes priority |
+| No rows, or no recognisable status | NOTE is hidden entirely |
+
+**Behaviour:**
+- The NOTE is `contenteditable` — you can click it to change the wording if needed
+- If the NOTE overlaps the page footer, it is automatically moved to a dedicated overflow page
+- The NOTE always appears at the bottom of the **last page** that has incident rows
+
+---
+
+*Continue to [Section 5 — Charts Explained](#5-charts-explained)*
