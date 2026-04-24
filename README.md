@@ -637,3 +637,193 @@ Below the last incidents table, the tool automatically writes a NOTE paragraph b
 ---
 
 *Continue to [Section 5 — Charts Explained](#5-charts-explained)*
+
+---
+
+## 5. Charts Explained
+
+The report has up to **5 charts** depending on the data uploaded. This section explains how each chart works, where its data comes from, and how it renders.
+
+---
+
+### How Charts Render (The Snapshot System)
+
+Understanding this first will make everything else clear.
+
+Every chart goes through a two-step process:
+
+```
+Step 1 — Draw                         Step 2 — Freeze
+─────────────────────                 ─────────────────────────────────
+Chart.js / Canvas API                 canvas.toDataURL('image/png')
+draws to a <canvas>        ────────►  captures the canvas as a PNG
+element in memory                     and places it in an <img> tag.
+                                      The canvas is then hidden.
+```
+
+**Why freeze as an image?**
+- A live `<canvas>` is expensive for the browser to scroll past — it has active JavaScript watchers
+- A static `<img>` is just a texture — the browser's GPU compositor handles it with zero JS cost
+- Result: **smooth scrolling** past all charts with no jank
+
+**Print quality:**
+- Charts are drawn at **4× the screen size** (`SNAPSHOT_RATIO = 4` in `script.js`)
+- A chart container that is 400×200px on screen is drawn internally at 1600×800px
+- When printed on A4 at 300 DPI, this resolves to approximately **300 DPI quality** — sharp bars and readable labels
+- No extra rendering step happens at print time — the high-res image is already there
+
+**When charts re-render:**
+- EPS chart: every time Customer Name or EPS value changes
+- Device chart: every time a new Device CSV is uploaded
+- Severity / TP charts: every time a new Analytics CSV is uploaded
+- BluPine chart: every time the incident table changes (rows added, deleted, edited)
+
+---
+
+### Chart 1 — Daily Average EPS (Page 4, Section 1)
+
+```
+        RMZ Corp.
+  100 ┤
+   80 ┤         ╔═══╗╗
+   60 ┤         ║   ║║
+   40 ┤         ║   ║║
+   20 ┤         ║   ║║
+    0 └─────────╚═══╝╚──
+         ┌──────────────┐
+         │ AVG EPS      │
+         │ RMZ Corp. 82 │
+         └──────────────┘
+```
+
+| Property | Detail |
+|----------|--------|
+| **Type** | Custom 3D bar chart — hand-drawn using HTML5 Canvas 2D API (NOT Chart.js) |
+| **Data source** | `Daily AVG EPS` input field in the dashboard |
+| **Customer label** | `Customer Name` input field |
+| **Y-axis max** | Auto-scales to the next multiple of 20 strictly above the value (e.g. value `82` → max `100`; value `100` → max `120`) |
+| **Y-axis step** | Fixed at 20 |
+| **3D effect** | Right face (dark blue `#2F619E`) + top face (light blue `#A8D0E8`) + front face (medium blue `#5b9bd5`) |
+| **Legend table** | Small table below the chart showing customer name and EPS value |
+
+**How the 3D bar is drawn** (`draw3DEPSChart` in `script.js`):
+1. A white rectangle is drawn as the chart back wall
+2. Horizontal grid lines are drawn across the full width (including the 3D depth area)
+3. The bar's **right face** (a parallelogram) is filled dark blue
+4. The bar's **front face** (a plain rectangle) is filled medium blue on top of the right face
+5. The bar's **top face** (a parallelogram) is filled light blue
+6. A subtle border is stroked around the front face
+7. The left Y-axis line is redrawn on top of everything for visibility
+
+---
+
+### Chart 2 — Reporting Device Average EPS (Page 4, Section 2)
+
+| Property | Detail |
+|----------|--------|
+| **Type** | Chart.js grouped bar chart |
+| **Data source** | Device CSV upload (column containing `host` = labels, column containing `rate` = values) |
+| **Max devices shown** | 10 (top 10 rows of the CSV) |
+| **Colours** | Each device gets its own colour from a 10-colour palette: blue, orange, grey, yellow, dark blue, green, navy, brown, dark grey, dark yellow |
+| **Legend** | Shown at the bottom — one colour swatch per device |
+| **Data labels** | Value displayed above each bar |
+| **If no CSV uploaded** | Chart area is empty (no blank-state message for this chart) |
+
+**CSV column detection logic** (`script.js` device CSV handler):
+- Scans every column header
+- First header containing the word `host` (case-insensitive) → used as the device name
+- First header containing the word `rate` (case-insensitive) → used as the EPS value
+- This means headers like `Host Name`, `hostname`, `AVG(Event Rate)`, `event_rate` all work
+
+---
+
+### Chart 3 — Incident Severity Count (Page 5, Section 3)
+
+| Property | Detail |
+|----------|--------|
+| **Type** | Chart.js bar chart |
+| **Data source** | Analytics CSV — `Severity` column |
+| **Categories counted** | `HIGH`, `MEDIUM`, `LOW` (case-insensitive match) |
+| **Bar colours** | High = Red (`#FF0000`), Medium = Yellow (`#FFFF00`), Low = Green (`#00B050`) |
+| **Y-axis** | Starts at 0, max = highest count + 1, integer steps only |
+| **Data labels** | Count shown above each bar |
+| **If all counts are zero** | Chart is hidden; blank-state message shown: *"No potential incidents have been observed from [date] 9:00 PM to [date] 9:00 PM."* |
+
+**Counting logic:**
+```
+For each row in the CSV:
+  Read the Severity column value
+  Convert to uppercase, trim spaces
+  If value == "HIGH"   → highCount++
+  If value == "MEDIUM" → mediumCount++
+  If value == "LOW"    → lowCount++
+  Any other value      → ignored
+```
+
+---
+
+### Chart 4 — True Positive (Page 5, Section 4)
+
+| Property | Detail |
+|----------|--------|
+| **Type** | Chart.js bar chart |
+| **Data source** | Analytics CSV — `Resolution` column |
+| **Detection** | Row is counted as True Positive if Resolution contains `true positive` or `tp` (case-insensitive) |
+| **Breakdown** | Counted separately for High, Medium, Low (using the same row's `Severity` column) |
+| **Bar colours** | Same as Severity chart — Red, Yellow, Green |
+| **If no TP rows found** | Chart is hidden; blank-state message shown: *"No True Positive incidents observed."* |
+
+**False Positive text block** (below Chart 4, not a chart):
+- Reads the same `Resolution` column, looks for `false positive` or `fp`
+- Counts total FPs and breaks them down by severity
+- If zero FPs: *"No False positive incidents have been observed from [date range]."*
+- If FPs exist: *"2 Medium, 1 Low false positive incidents observed from [date range]."*
+- This text is always shown (unlike the TP chart which hides when empty)
+
+---
+
+### Chart 5 — Potential Incidents with Count (Page 6, BluPine only)
+
+| Property | Detail |
+|----------|--------|
+| **Type** | Chart.js grouped bar chart |
+| **Data source** | The **Incident Title** column in the incidents table (live — reads the DOM, not the CSV) |
+| **Visible** | Only when Customer Name contains `blupine` |
+| **What it shows** | One bar per unique incident title; bar height = number of rows with that title |
+| **Colours** | Each unique title gets its own colour from the 10-colour palette |
+| **Legend** | Full incident title as legend label at the bottom |
+| **Updates** | Refreshes every time the incident table changes (300ms debounce) |
+| **If all titles are blank** | Chart box hidden; blank-state message shown |
+
+**Titles ignored when counting:**
+- Empty cells
+- `#` (default placeholder)
+- `New Incident` (default placeholder)
+- `-`
+- `N/A`
+- `TBD`
+
+---
+
+### Colour Palette Reference
+
+All Chart.js charts use the same 10-colour rotation:
+
+| Index | Colour | Hex |
+|-------|--------|-----|
+| 1 | Steel Blue | `#5b9bd5` |
+| 2 | Orange | `#ed7d31` |
+| 3 | Grey | `#a5a5a5` |
+| 4 | Yellow | `#ffc000` |
+| 5 | Dark Blue | `#4472c4` |
+| 6 | Green | `#70ad47` |
+| 7 | Navy | `#255e91` |
+| 8 | Brown | `#9e480e` |
+| 9 | Dark Grey | `#636363` |
+| 10 | Dark Yellow | `#997300` |
+
+After index 10, the palette wraps back to index 1.
+
+---
+
+*Continue to [Section 6 — Technical Architecture](#6-technical-architecture)*
