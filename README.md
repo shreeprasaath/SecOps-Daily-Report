@@ -1,95 +1,105 @@
-# SOC Daily Report
+# SOC Daily Report Generator
 
-A static, print-ready **SOC Daily Report** web app. It runs entirely in the browser (no backend): edit fields, upload CSV analytics, generate charts, and export to PDF via the system print dialog.
-
-**Repository:** [github.com/Maveera/SOC-Daily-Report](https://github.com/Maveera/SOC-Daily-Report)
-
-## What’s in the repo
-
-| File | Role |
-|------|------|
-| `index.html` | Page structure, cover, document control, TOC, charts, Potential Incidents tables |
-| `style.css` | Layout, A4-style pages, `@media print`, incident table styling |
-| `script.js` | Charts (Chart.js), CSV parsing (PapaParse), pagination, BluPine logic, print |
-
-External libraries are loaded from CDNs (Chart.js, chartjs-plugin-datalabels, PapaParse).
-
-## Features
-
-### Report content
-
-- **Cover page** — Customer name, date, optional SNS and client logos.
-- **Document control** — Editable metadata table.
-- **Table of contents** — Section links; page numbers update when the layout changes.
-- **Charts** — Daily Average EPS, reporting device EPS, incident severity, True/False Positive (when data exists).
-- **Potential Incidents** — Multi-column table with borders; **Observation & Recommendation** is **left-aligned** for long text; other columns are centered. Drag the lines between **column headers** to resize widths (applies across incident pages).
-
-### Data import
-
-- **Reporting Device (CSV)** — Host/rate columns parsed for the device chart.
-- **Analytics (TP.csv)** — Populates severity / TP / FP charts and fills the Potential Incidents table when columns match (e.g. Ticket, Severity, Incident Title, Observation, Status, True/False).
-
-### BluPine customers
-
-If the customer name **includes** `blupine` (case-insensitive):
-
-- **Potential Incidents with Count** chart and section appear.
-- Section numbering and TOC adjust (e.g. main incidents list may show as section 6).
-- Layout avoids pushing an empty incidents block to a new page when the table has no real data.
-
-### Notes
-
-- A **NOTE** paragraph under the last incidents table reflects open vs closed incidents (wording updates from row statuses).
-
-### Pagination
-
-- Row height and page breaks are recalculated as you type or when content wraps; overflow rows move to **(Continued)** pages with repeated headers.
-- An **End of Document** marker is placed on the last page above the footer.
-
-### Print / PDF
-
-- **PRINT FINAL REPORT** raises the browser print dialog (print or Save as PDF).
-- Charts render at higher resolution for print (`devicePixelRatio` boost) so bars and labels stay sharp.
-- After printing, the page reloads so the next export starts from a clean state.
-- Print CSS hides dashboard-only controls (e.g. config panel, resize handles).
-
-## Run locally
-
-1. Clone or download this repository.
-2. Open `index.html` in a modern browser **or** serve the folder, for example:
-   ```bash
-   npx serve .
-   ```
-   then open the URL shown (e.g. `http://localhost:3000`).
-
-No build step is required.
-
-## Git: push updates
-
-If you already cloned the repo and have push access:
-
-```bash
-git add .
-git status
-git commit -m "Describe your change"
-git push origin main
-```
-
-For a **new** clone:
-
-```bash
-git clone https://github.com/Maveera/SOC-Daily-Report.git
-cd SOC-Daily-Report
-```
-
-(Cache-busting query strings on `style.css` / `script.js` in `index.html` can be bumped when you change those assets so browsers load fresh files.)
-
-## Technology
-
-- **HTML5** — Structure, `contenteditable` where needed.
-- **CSS3** — Flex layout, print styles, fixed page dimensions for export.
-- **JavaScript** — DOM updates, pagination, file readers, Chart.js integration.
+> A professional, browser-based Security Operations Center (SOC) Daily Report tool built by **Secure Network Solutions India Pvt Ltd (SNS)**. Upload your data, fill in the details, and export a polished PDF report — no server, no installation, no coding needed.
 
 ---
 
-*Secure Network Solutions India Pvt Ltd — SOC Daily Report tooling.*
+## Table of Contents
+
+1. [Overview](#1-overview)
+2. [Dashboard Controls](#2-dashboard-controls)
+3. [Report Pages Explained](#3-report-pages-explained)
+4. [Interactive Features](#4-interactive-features)
+5. [Charts Explained](#5-charts-explained)
+6. [Technical Architecture](#6-technical-architecture)
+7. [Troubleshooting & FAQ](#7-troubleshooting--faq)
+
+---
+
+## 1. Overview
+
+### What is this tool?
+
+The SOC Daily Report Generator is a **single-page web application** that runs entirely inside your browser. It lets SOC analysts at SNS:
+
+- Fill in a customer's name, EPS value, and upload their incident data
+- Automatically generate professional charts and incident tables
+- Export the complete report as a PDF via the browser's print dialog
+
+There is **no backend server**, **no database**, and **no login required**. Everything happens locally on your machine.
+
+### Who is it for?
+
+| Role | How they use it |
+|------|----------------|
+| SOC Analyst | Fills in daily incident data and exports the PDF |
+| Team Lead | Reviews and approves the report before sending |
+| Developer / Fresher | Maintains and extends the tool's features |
+
+### Key Features
+
+- **6-page A4 report** — Cover, Document Control, Table of Contents, 2 chart pages, Incident table
+- **CSV data import** — Upload device EPS data and incident analytics; charts and tables populate automatically
+- **4 charts** — Daily Average EPS (3D), Reporting Device EPS, Incident Severity Count, True/False Positive
+- **Editable everywhere** — Click any text on the report to edit it directly in the browser
+- **Auto pagination** — Incident table automatically overflows to extra pages when it gets too long
+- **BluPine mode** — Special layout and extra chart for BluPine customers (auto-detected from customer name)
+- **High-quality PDF export** — Charts render at 4× resolution so they stay sharp when printed
+
+### Prerequisites
+
+You only need:
+- A **modern browser** — Google Chrome or Microsoft Edge recommended (best print support)
+- **No Node.js**, no Python, no build tools required
+
+To run with a local server (optional, but avoids some browser file-access restrictions):
+```bash
+# If you have Node.js installed:
+npx serve .
+# Then open http://localhost:3000 in your browser
+```
+
+### How to Run Locally
+
+**Option A — Simplest (double-click):**
+1. Download or clone this repository
+2. Open `index.html` directly in Chrome or Edge
+
+**Option B — Local server (recommended):**
+```bash
+git clone https://github.com/shreeprasaath/secops-daily-report.git
+cd secops-daily-report
+npx serve .
+```
+Then open the URL shown in your terminal (e.g. `http://localhost:3000`).
+
+No build step. No `npm install`. Just open and use.
+
+---
+
+### Repository File Map
+
+| File | Type | Purpose |
+|------|------|---------|
+| `index.html` | HTML | The entire report structure — all 6 pages, the dashboard control panel, chart canvas elements, and the incident table |
+| `style.css` | CSS | All visual styling — A4 page dimensions, colors, fonts, table layouts, print-specific rules |
+| `script.js` | JavaScript | All logic — chart rendering, CSV parsing, pagination, column resizing, print handling |
+| `EPStest.csv` | CSV | Sample data for the **Reporting Device** chart (device names + event rates) |
+| `Incidenttest.csv` | CSV | Sample data for **all incident charts** and the **Potential Incidents table** |
+| `RMZ_template.pdf` | PDF | The original report template this tool is based on (for visual reference) |
+
+### External Libraries
+
+These are loaded automatically from CDN — no download needed:
+
+| Library | Version | What it does |
+|---------|---------|-------------|
+| [Chart.js](https://www.chartjs.org/) | Latest | Renders bar charts for devices, severity, and TP/FP data |
+| [chartjs-plugin-datalabels](https://chartjs-plugin-datalabels.netlify.app/) | 2.0.0 | Adds value labels on top of chart bars |
+| [PapaParse](https://www.papaparse.com/) | 5.3.2 | Parses uploaded CSV files into JavaScript objects |
+
+> The EPS chart (Section 1) is **not** built with Chart.js — it is hand-drawn using the browser's built-in HTML5 Canvas API for the custom 3D bar effect.
+
+---
+
+*Continue to [Section 2 — Dashboard Controls](#2-dashboard-controls)*
