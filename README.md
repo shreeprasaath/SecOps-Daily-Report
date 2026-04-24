@@ -827,3 +827,413 @@ After index 10, the palette wraps back to index 1.
 ---
 
 *Continue to [Section 6 — Technical Architecture](#6-technical-architecture)*
+
+---
+
+## 6. Technical Architecture
+
+This section is for developers and freshers who want to understand how the code is structured, modify existing behaviour, or add new features.
+
+---
+
+### 6.1 How the Three Files Relate
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         index.html                                  │
+│                                                                     │
+│  • Defines all 6 A4 pages as <div class="page"> blocks             │
+│  • Each page holds headings, canvas placeholders, tables            │
+│  • contenteditable="true" marks text the user can click-edit       │
+│  • Loads CDN libraries (Chart.js, PapaParse, DataLabels)           │
+│  • Links style.css and script.js                                    │
+└──────────────┬──────────────────────────────────┬───────────────────┘
+               │                                  │
+               ▼                                  ▼
+┌──────────────────────────┐     ┌────────────────────────────────────┐
+│       style.css          │     │             script.js              │
+│                          │     │                                    │
+│  • A4 page sizing        │     │  • Reads dashboard inputs          │
+│    (210mm × 297mm)       │     │  • Parses CSV files (PapaParse)    │
+│  • Flex column layout    │     │  • Draws / snapshots charts        │
+│    for each page         │     │  • Manages incident table          │
+│  • Column widths for     │     │  • Runs pagination engine          │
+│    the incident table    │     │  • Updates page numbers            │
+│  • @media print rules    │     │  • Handles print + reload          │
+│  • contain: layout style │     │  • Auto-generates dates & notes    │
+│    (scroll performance)  │     │                                    │
+└──────────────────────────┘     └────────────────────────────────────┘
+```
+
+---
+
+### 6.2 index.html Structure
+
+The HTML file has two main areas:
+
+**1. Dashboard panel** (`.no-print` div at the top)
+- Contains all `<input>` fields and the Print button
+- Has `class="no-print"` so the `@media print` CSS hides it during export
+
+**2. Report pages** — each page is a `<div class="page" id="pN">`
+
+| Page ID | Contents |
+|---------|----------|
+| `#p1` | Cover — logo, title, date, client logo, copyright, footer strip |
+| `#p2` | Document Control table |
+| `#p3` | Table of Contents with `<a>` links |
+| `#p4` | Two `<canvas>` elements for EPS and Device charts |
+| `#p5` | Two `<canvas>` elements for Severity and TP charts + FP text |
+| `#p6` | Incident table, Add/Delete buttons, status note |
+| Dynamic | Overflow pages created by JS — `class="page incident-page-extra"` |
+
+**Key HTML patterns used:**
+
+```html
+<!-- A4 page wrapper -->
+<div class="page" id="p4">
+  <img class="sns-logo-img page-sns-logo" src="" alt="">
+  <!-- content -->
+  <div class="footer-text-row">
+    <span class="confidential-mark">Confidential</span>
+    <span class="page-num">4</span>   <!-- updated by JS -->
+  </div>
+  <div class="footer-strip">...</div>
+</div>
+
+<!-- Editable cell example -->
+<td contenteditable="true">Amirdeshwara R</td>
+
+<!-- Chart canvas — JS reads this and draws into it -->
+<div class="canvas-wrap"><canvas id="epsChart"></canvas></div>
+
+<!-- Incident table colgroup controls column widths via JS -->
+<colgroup>
+  <col class="inc-col-sn">      <!-- 6%  -->
+  <col class="inc-col-ticket">  <!-- 16% -->
+  <col class="inc-col-sev">     <!-- 14% -->
+  <col class="inc-col-title">   <!-- 46% -->
+  <col class="inc-col-status">  <!-- 18% -->
+</colgroup>
+```
+
+---
+
+### 6.3 style.css Architecture
+
+**A4 page sizing** — the most important rule:
+```css
+.page {
+    width: 210mm;
+    height: 297mm;
+    padding: 15mm 20mm;   /* top/bottom 15mm, left/right 20mm */
+    overflow: hidden;
+    contain: layout style; /* isolates each page's layout for scroll performance */
+}
+```
+`contain: layout style` means a change inside one page cannot trigger a reflow in other pages. This is why scrolling through many pages stays smooth.
+
+**Half-page chart layout** (two charts per page, each ~46% height):
+```css
+.half-container { height: 46%; }   /* leaves 8% gap across both containers */
+.canvas-wrap    { flex-grow: 1; position: relative; } /* fills remaining space */
+```
+
+**Incident table column widths** (in `<col>` elements, overridden to `px` by JS):
+```css
+.inc-col-sn     { width: 6%;  }
+.inc-col-ticket { width: 16%; }
+.inc-col-sev    { width: 14%; }
+.inc-col-title  { width: 46%; }
+.inc-col-status { width: 18%; }
+```
+
+**Header vs data cell text behaviour:**
+```css
+/* Headers never break mid-word */
+.incident-data-table th { white-space: nowrap; overflow: hidden; }
+
+/* Data cells wrap long text to the next line */
+.incident-data-table td { word-break: break-word; overflow-wrap: break-word; }
+```
+
+**Print media query** (`@media print`) key rules:
+```css
+.no-print, .btn-row, .incident-col-resize-handle { display: none !important; }
+body  { background: none; padding: 0; }
+.page { margin: 0; box-shadow: none; }
+* { -webkit-print-color-adjust: exact !important; } /* forces colours in PDF */
+```
+
+---
+
+### 6.4 script.js Function Reference
+
+The script is ~1,370 lines. Here is every major function grouped by area.
+
+---
+
+#### Initialisation
+
+| Function / Variable | What it does |
+|--------------------|-------------|
+| `window.onload` | Entry point — sets auto dates, blank messages, calls `sync()` |
+| `sync()` | Master update — called whenever Customer Name or EPS changes. Syncs the name to all locations, detects BluPine, refreshes charts, triggers pagination |
+| `window._fpDateRange` | Global object storing `{ coverDate, todayDate }` — used by the FP text generator |
+
+**Date logic inside `window.onload`:**
+```
+today     = current system date
+yesterday = today - 1 day  (n-1 logic)
+
+Cover date          → yesterday in DD-MM-YYYY
+Doc Prepared On     → today in DD/MM/YYYY (09 PM [yesterday day] [month] to 09 PM [today day] [month])
+Blank-state message → "...from [yesterday] 9:00 PM to [today] 9:00 PM"
+```
+
+---
+
+#### Chart Rendering
+
+| Function | What it does |
+|----------|-------------|
+| `SNAPSHOT_RATIO = 4` | Constant — all charts render at 4× CSS size for 300 DPI print quality |
+| `snapshotChart(canvasEl)` | Captures the canvas as a PNG (`toDataURL`), places it in an `<img>` over the canvas, hides the canvas |
+| `draw3DEPSChart(canvas, value, name, ratio)` | Draws the custom 3D bar chart using Canvas 2D API — back wall, grid lines, right face, front face, top face, Y-axis labels |
+| `refreshEPS()` | Reads EPS input + customer name, calls `draw3DEPSChart`, then `snapshotChart` |
+| `renderDeviceChart(labels, data)` | Creates a Chart.js bar chart for device EPS data; calls `snapshotChart` after one animation frame |
+| `renderIncidentChart(id, counts, label)` | Creates a Chart.js bar chart for severity or TP data; calls `snapshotChart` after one animation frame |
+| `refreshBluPineChart()` | Reads incident titles from the DOM, counts occurrences, creates Chart.js chart; calls `snapshotChart` |
+
+---
+
+#### CSV Parsing
+
+| Event / Function | What it does |
+|----------------|-------------|
+| `#deviceCsv` change event | Triggers PapaParse on the uploaded file; finds `host` and `rate` columns; calls `renderDeviceChart` |
+| `#incidentCsv` change event | Triggers PapaParse; counts severity/TP/FP; populates incident table rows; triggers pagination |
+| `escapeHtmlCell(val)` | Sanitises a CSV cell value before inserting it into the DOM (prevents XSS — e.g. `<script>` in a CSV cell cannot execute) |
+
+**CSV column detection approach:**
+```javascript
+// Finds the first header that contains the search word (case-insensitive)
+const sevCol = headers.find(h => h.toUpperCase().includes("SEVERITY"));
+const ticketCol = headers.find(h => h.toUpperCase().includes("TICKET"));
+// etc.
+```
+This means column headers do not need to match exactly — `TICKET NO`, `Ticket Number`, `ticket_id` all work for the ticket column.
+
+---
+
+#### Column Resize System
+
+| Function / Constant | What it does |
+|--------------------|-------------|
+| `DEFAULT_INCIDENT_COL_FRACS` | Array `[0.06, 0.16, 0.14, 0.46, 0.18]` — default widths as fractions of total table width |
+| `INCIDENT_COL_MIN_PX = 40` | Minimum column width in pixels — enforced during drag |
+| `ensureIncidentColgroup(table)` | Creates the `<colgroup>` element if it does not exist |
+| `incidentTableInnerWidth(table)` | Returns the pixel width of the table's **wrapper div** (not the table itself, which may be overflowed) |
+| `applyIncidentColWidthsPx(widths)` | Sets `style.width` in pixels on every `<col>` in every incident table on screen |
+| `normalizeIncidentColWidths(table)` | Re-scales stored column widths to fit the current container width (called after window resize or column drag) |
+| `initIncidentColumnResize(table)` | Adds drag handles to each `<th>` and attaches `mousedown`/`mousemove`/`mouseup` listeners |
+| `fitIncidentTablesToPageWidth()` | Called on window resize (debounced 200ms) to keep tables within page bounds |
+
+---
+
+#### Pagination Engine
+
+| Function | What it does |
+|----------|-------------|
+| `schedulePagination()` | Debounced wrapper (300ms) — prevents pagination from running on every single keystroke |
+| `tbodyResizeObserver` | `ResizeObserver` instance watching all `<tbody>` elements; fires `schedulePagination()` when a tbody's height changes (e.g. text wraps) |
+| `managePagination()` | Main engine — moves overflow rows to the next page, moves underflow rows back, creates/deletes pages, renumbers rows, updates NOTE and page numbers |
+| `createNewIncidentPage(afterPage)` | Builds a new `.page.incident-page-extra` div with a full table structure and inserts it after the given page |
+| `pruneEmptyIncidentContinuationPages()` | Removes any continuation pages whose `<tbody>` has zero rows |
+| `getIncidentNoteReservePx()` | Returns `130` if there are rows with open/closed status (reserves space for the NOTE), otherwise `0` |
+| `renumberIncidentRows()` | Walks all `<tbody>` rows across all pages and writes sequential S.No values |
+| `observeTbody(tbody)` | Registers a `<tbody>` with the `ResizeObserver` |
+
+**Pagination algorithm (simplified):**
+```
+1. Check if section5Wrapper has < 150px room before footer → move to new page (p7)
+2. For each tbody (top to bottom):
+   While last row overflows past footer boundary:
+     Move last row to next page (create page if needed)
+3. For each tbody (bottom to top):
+   While first row of this tbody fits on previous page:
+     Move first row back up (delete this page if now empty)
+4. Renumber all S.No cells
+5. Update NOTE text
+6. Update page numbers in footer + TOC
+```
+
+---
+
+#### Page Numbering & End-of-Document Marker
+
+| Function | What it does |
+|----------|-------------|
+| `getVisibleReportPages()` | Returns all `.page` elements that are currently visible (not `display:none`) |
+| `updatePageNumbers()` | Assigns sequential numbers to all `.page-num` spans; updates TOC page references; places the `← End of Document →` marker on the last page |
+
+The `← End of Document →` marker is a `<div class="end-doc-pin">` element positioned above the footer on whichever page happens to be last — it moves automatically as pages are added or removed.
+
+---
+
+#### Print Flow
+
+```
+User clicks "PRINT FINAL REPORT"
+         │
+         ▼
+printReport() in script.js
+         │
+         ▼
+window.addEventListener('afterprint', onAfterPrint)
+         │
+         ▼
+window.print()  ──►  Browser print dialog opens
+                      (user selects printer / Save as PDF)
+                      (charts are already 4× resolution images)
+         │
+         ▼  (user closes dialog)
+onAfterPrint() fires
+         │
+         ▼
+window.location.reload()  ──►  Page resets to clean state
+```
+
+Charts do not need any extra processing before printing because they were already snapshotted at 4× resolution when they were first rendered.
+
+---
+
+### 6.5 Cache Busting
+
+The browser caches `style.css` and `script.js` aggressively. Whenever you deploy a change to either file, users may still see the old version until the cache expires.
+
+**Solution:** Bump the version number in the `<head>` of `index.html`:
+
+```html
+<!-- In index.html -->
+<link rel="stylesheet" href="style.css?v=19">   <!-- change 19 → 20 -->
+<script src="script.js?v=19"></script>           <!-- change 19 → 20 -->
+```
+
+The `?v=19` query string makes the browser treat it as a new URL, forcing a fresh download. The number has no other meaning — just increment it each time you deploy.
+
+---
+
+### 6.6 How to Add a New Column to the Incident Table
+
+This is the most common structural change. Here is every place you need to touch, in order:
+
+**Step 1 — `index.html`: Add `<col>` to colgroup**
+```html
+<colgroup>
+  <col class="inc-col-sn">
+  <col class="inc-col-ticket">
+  <col class="inc-col-sev">
+  <col class="inc-col-title">
+  <col class="inc-col-newcol">   <!-- add this -->
+  <col class="inc-col-status">
+</colgroup>
+```
+
+**Step 2 — `index.html`: Add `<th>` to the header row**
+```html
+<tr>
+  <th>S.No</th>
+  <th>Ticket No</th>
+  <th>Severity</th>
+  <th>Incident Title</th>
+  <th>New Column</th>   <!-- add this -->
+  <th>Status</th>
+</tr>
+```
+
+**Step 3 — `index.html`: Add a `<td>` to the default body row**
+```html
+<tr>
+  <td contenteditable="true">1</td>
+  <td contenteditable="true">#71408</td>
+  <td contenteditable="true">Medium</td>
+  <td contenteditable="true">Account Locked: Server</td>
+  <td contenteditable="true"></td>   <!-- add this -->
+  <td contenteditable="true">Closed</td>
+</tr>
+```
+
+**Step 4 — `style.css`: Add a width class**
+```css
+.inc-col-newcol { width: 12%; }
+/* Reduce other columns so total remains 100%
+   e.g. reduce inc-col-title from 46% to 34% */
+```
+
+**Step 5 — `script.js`: Update column count guards**
+Search for every `cols.length !== 5` and `cells.length > 5` and update the number:
+```javascript
+// Change from:
+if (cols.length !== 5) return;
+// Change to:
+if (cols.length !== 6) return;
+```
+
+**Step 6 — `script.js`: Update `DEFAULT_INCIDENT_COL_FRACS`**
+```javascript
+// Change from:
+const DEFAULT_INCIDENT_COL_FRACS = [0.06, 0.16, 0.14, 0.46, 0.18];
+// Change to (must sum to 1.0):
+const DEFAULT_INCIDENT_COL_FRACS = [0.06, 0.16, 0.14, 0.34, 0.12, 0.18];
+```
+
+**Step 7 — `script.js`: Update the CSV handler to populate the new column**
+```javascript
+// Inside the incidentCsv complete handler, find the row-building code:
+const tr = '<tr>'
+    + `<td contenteditable="true">${i + 1}</td>`
+    + `<td contenteditable="true">${escapeHtmlCell(row[ticketCol])}</td>`
+    + `<td contenteditable="true">${escapeHtmlCell(row[sevCol])}</td>`
+    + `<td contenteditable="true">${escapeHtmlCell(row[titleCol])}</td>`
+    + `<td contenteditable="true">${escapeHtmlCell(row[newCol])}</td>`  // add
+    + `<td contenteditable="true">${escapeHtmlCell(row[statusCol])}</td>`
+    + '</tr>';
+```
+
+**Step 8 — `script.js`: Update `addRow()` to include the new cell**
+```javascript
+const row = '<tr>'
+    + `<td contenteditable="true">${rowCount}</td>`
+    + '<td contenteditable="true">#</td>'
+    + '<td contenteditable="true">High</td>'
+    + '<td contenteditable="true">New Incident</td>'
+    + '<td contenteditable="true"></td>'   // add
+    + '<td contenteditable="true">Open</td>'
+    + '</tr>';
+```
+
+**Step 9 — `script.js`: Update `createNewIncidentPage()` with the new `<th>` and `<col>`**
+Find the `createNewIncidentPage` function and add the new column to the table HTML template inside it (same changes as Steps 1–2).
+
+**Step 10 — Bump the version** in `index.html` (`?v=N` → `?v=N+1`)
+
+---
+
+### 6.7 How to Change a Name/Value That Is Hardcoded
+
+| What to change | Where to find it |
+|---------------|-----------------|
+| "Prepared By" name | `index.html` — `<td>Amirdeshwara R</td>` (~line 74) |
+| "Reviewed By" name | `index.html` — `<td>Kishore Kumar K</td>` (~line 80) |
+| "Approved By" name | `index.html` — `<td>Diptesh Saha</td>` (~line 83) |
+| Copyright text | Click it directly in the browser and type, OR edit `index.html` `<p class="copyright-text">` |
+| Default EPS value | `index.html` — `<input ... value="82">` |
+| Default customer name | `index.html` — `<input ... value="RMZ Corp.">` |
+| Status NOTE wording | `script.js` — `updateIncidentNote()` function, the two `noteEl.innerText = "NOTE: ..."` lines |
+| Chart bar colours | `script.js` — `const themeColors = [...]` array at the top |
+| EPS bar colour | `script.js` — `draw3DEPSChart()` function, `ctx.fillStyle = '#5b9bd5'` (front face) |
+
+---
+
+*Continue to [Section 7 — Troubleshooting & FAQ](#7-troubleshooting--faq)*
