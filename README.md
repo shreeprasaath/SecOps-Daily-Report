@@ -1237,3 +1237,264 @@ Find the `createNewIncidentPage` function and add the new column to the table HT
 ---
 
 *Continue to [Section 7 — Troubleshooting & FAQ](#7-troubleshooting--faq)*
+
+---
+
+## 7. Troubleshooting & FAQ
+
+---
+
+### General Issues
+
+---
+
+**Q: I made a change to `script.js` or `style.css` but the browser still shows the old version.**
+
+The browser has cached the old file. Two fixes:
+
+- **Hard refresh:** Press `Ctrl + Shift + R` (Windows/Linux) or `Cmd + Shift + R` (Mac)
+- **Bump the version string** in `index.html` so all users get the new file automatically:
+  ```html
+  <!-- Change v=19 to v=20 (or any higher number) -->
+  <link rel="stylesheet" href="style.css?v=20">
+  <script src="script.js?v=20"></script>
+  ```
+
+---
+
+**Q: The page looks broken or unstyled.**
+
+- Make sure `style.css` is in the **same folder** as `index.html`
+- Make sure `script.js` is in the **same folder** as `index.html`
+- If you opened `index.html` by double-clicking and see `file://` in the address bar, some browsers block local file access. Use a local server instead:
+  ```bash
+  npx serve .
+  ```
+
+---
+
+**Q: The date shown on the cover page is wrong.**
+
+The tool reads your **system clock** and subtracts one day (n−1 logic). If the date is wrong:
+- Check your computer's date and time settings
+- The cover date is `contenteditable` — click it and type the correct date directly
+
+---
+
+**Q: My edits disappeared after I refreshed the page.**
+
+All edits made by clicking and typing in the report are **held in the browser's memory only**. Refreshing the page resets everything to defaults. Always **export your PDF before refreshing or closing the browser**.
+
+---
+
+### Chart Issues
+
+---
+
+**Q: I uploaded a CSV but the charts did not update.**
+
+1. Check that the CSV column headers match what the tool expects:
+   - Device CSV: headers must contain the words `host` and `rate`
+   - Analytics CSV: headers must contain `severity` and `resolution` (and `ticket`, `status` for the table)
+2. Make sure the file is saved as `.csv` (not `.xlsx` or `.xls`)
+3. Hard-refresh the page (`Ctrl + Shift + R`) and upload again
+
+---
+
+**Q: The Incident Severity chart is not showing even though I uploaded data.**
+
+The `Severity` column values must be exactly `High`, `Medium`, or `Low` (any capitalisation). Any other value — including `CRITICAL`, `INFO`, `P1`, `P2` — is silently ignored. Check your CSV and correct the values.
+
+---
+
+**Q: The True Positive chart is not showing.**
+
+The `Resolution` column must contain the text `true positive` or `tp` (case-insensitive) for a row to be counted. If your CSV uses a different term (e.g. `Confirmed`, `Real`), the chart will stay hidden.
+
+---
+
+**Q: The False Positive text says "No False positive incidents" even though I have FPs.**
+
+Same reason — the `Resolution` column must contain `false positive` or `fp`. Check the exact wording in your CSV.
+
+---
+
+**Q: The EPS chart is blank / not drawing.**
+
+- Make sure you have entered a number in the `Daily AVG EPS` field (not letters)
+- If the value is `0`, the bar will draw at zero height — it is technically correct but looks empty. Enter a positive number.
+
+---
+
+**Q: The charts look blurry in the PDF.**
+
+This should not happen with the current build — charts render at 4× resolution before being frozen as images. If you see blur:
+- Make sure you are using the latest version of the script (check `?v=N` in `index.html` matches the file on disk)
+- In the browser print dialog, set **Paper size = A4** and **Scale = 100%** (not "Fit to page")
+
+---
+
+**Q: The BluPine chart is not appearing.**
+
+The Customer Name field must contain the word `blupine` (any capitalisation). Examples that work: `BluPine`, `BLUPINE`, `BluPine Corp`, `blupine solutions`. The check is case-insensitive and looks for the substring anywhere in the name.
+
+---
+
+### Incident Table Issues
+
+---
+
+**Q: The incident table is overflowing off the right edge of the page.**
+
+This usually means the column widths got out of sync. To reset:
+- Reload the page (`Ctrl + Shift + R`)
+- If the problem persists after reloading, check that `DEFAULT_INCIDENT_COL_FRACS` in `script.js` sums to exactly `1.0`:
+  ```javascript
+  // Must add up to 1.0
+  const DEFAULT_INCIDENT_COL_FRACS = [0.06, 0.16, 0.14, 0.46, 0.18];
+  // 0.06 + 0.16 + 0.14 + 0.46 + 0.18 = 1.00 ✓
+  ```
+
+---
+
+**Q: The Status column is getting pushed off the page when I enter a long Incident Title.**
+
+The incident table uses `table-layout: fixed` — column widths are enforced regardless of content length. Long text wraps to the next line within its cell instead of expanding the column. If you are still seeing overflow:
+- Check that `style.css` has `table-layout: fixed` on `.incident-data-table`
+- Check that `.incident-table-wrap` has `overflow-x: hidden`
+
+---
+
+**Q: The auto-generated NOTE is not appearing below the table.**
+
+The NOTE only appears when:
+1. At least one row exists in the table
+2. At least one `Status` cell contains the word `open` or `close` (case-insensitive)
+
+Check the Status column values. Values like `Resolved`, `Done`, `Pending` will not trigger the NOTE. Use `Open` or `Closed`.
+
+---
+
+**Q: Extra blank pages appeared after I deleted rows.**
+
+The pagination engine removes empty continuation pages automatically. If blank pages remain:
+- Wait a moment — pagination is debounced by 300ms after the last change
+- Click inside any incident cell to trigger a re-run
+- If still stuck, reload the page and re-upload your CSV
+
+---
+
+**Q: Adding a row is not working — the row appears but is immediately pushed to a new page.**
+
+This is correct behaviour when Page 6 is already full. The new row goes to a continuation page (Page 7, 8, etc.) automatically. This is not a bug.
+
+---
+
+### PDF / Print Issues
+
+---
+
+**Q: The PDF is missing the coloured footer strips and chart colours.**
+
+The browser's print dialog suppresses background colours by default. In the print dialog:
+- **Chrome / Edge:** Look for **"More settings"** → enable **"Background graphics"**
+- **Firefox:** Look for **"Print backgrounds"** checkbox
+- **Safari:** In the print preview, enable **"Print backgrounds"**
+
+---
+
+**Q: The PDF has extra white margins around each page.**
+
+In the browser print dialog:
+- Set **Margins** to **None**
+- Set **Paper size** to **A4**
+- Set **Scale** to **100%**
+
+The page design already includes its own internal margins (15mm top/bottom, 20mm left/right) so the system margins should be zero.
+
+---
+
+**Q: The report printed on Letter size paper instead of A4.**
+
+Change the paper size in the print dialog to **A4**. The `@page { size: A4; }` CSS rule requests A4 but the OS printer settings can override it.
+
+---
+
+**Q: The page reloads automatically after I close the print dialog — I lose my data.**
+
+This is by design. After printing, `window.location.reload()` is called to reset the tool to a clean state, ready for the next report. Always verify the PDF is saved before closing the dialog.
+
+If you need to keep your data across sessions, consider copying the contents of `index.html` to a local file after filling it in — advanced users can also use the browser's developer tools to export the DOM state.
+
+---
+
+**Q: The logos are not showing in the PDF.**
+
+- Only **PNG and JPG** files are reliably supported. SVG logos may not render correctly in all browsers during print.
+- Make sure the logo was uploaded **before** clicking Print — the upload is held in memory and must be done each session.
+- If using a transparent PNG, make sure the background of the page (white) shows through correctly.
+
+---
+
+### Developer / Code Issues
+
+---
+
+**Q: I added a column but the column resize drag is not working for it.**
+
+Check that you updated every instance of `cols.length !== 5` in `script.js` to match the new column count. There are several guards like this in the resize functions (`ensureIncidentColgroup`, `normalizeIncidentColWidths`, `readIncidentColWidthsPx`, `applyIncidentColWidthsPx`, `initIncidentColumnResize`).
+
+---
+
+**Q: I changed a colour in `style.css` but it is not applying.**
+
+- Hard-refresh (`Ctrl + Shift + R`)
+- Bump `?v=N` in `index.html`
+- Check that your selector is specific enough — some rules use `!important` in the print media query which may need to be matched
+
+---
+
+**Q: `node --check script.js` shows a syntax error after my edit.**
+
+Run this command before committing:
+```bash
+node --check script.js
+```
+Fix the reported line number. Common mistakes:
+- Missing closing `}` or `)`
+- Trailing comma after the last property in an object
+- Using `const` inside a `switch` without a block `{}`
+
+---
+
+**Q: How do I reset the tool to completely factory defaults?**
+
+```bash
+git checkout -- index.html style.css script.js
+```
+This discards all local changes and restores the last committed version of those three files.
+
+---
+
+### Quick Reference Card
+
+| Task | How |
+|------|-----|
+| Change customer name | Type in the `Customer Name` field in the dashboard |
+| Change the date | Click the date on the cover page and type |
+| Change Prepared By name | Click the cell in the Document Control table and type |
+| Upload device chart data | Dashboard → Reporting Device (CSV) → `EPStest.csv` as reference |
+| Upload incident data | Dashboard → Analytics (TP.csv) → `Incidenttest.csv` as reference |
+| Add SNS logo | Dashboard → SNS Logo → select PNG/JPG |
+| Add client logo | Dashboard → Client Logo → select PNG/JPG |
+| Add an incident row | Click `+ Add Row` above the table |
+| Delete an incident row | Click `- Delete Row` above the table |
+| Resize a table column | Drag the edge of any column header |
+| Enable BluPine mode | Type `blupine` anywhere in the Customer Name |
+| Export to PDF | Click **PRINT FINAL REPORT** → Save as PDF in print dialog |
+| Force browser to reload new code | Bump `?v=N` in `index.html`, then hard-refresh |
+| Reset to defaults | `git checkout -- index.html style.css script.js` |
+
+---
+
+*Secure Network Solutions India Pvt Ltd — SOC Daily Report tooling.*
