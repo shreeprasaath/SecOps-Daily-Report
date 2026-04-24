@@ -66,9 +66,9 @@ input {
 /* ── SNS Logo on inner pages (absolute, top-right) ── */
 .page-sns-logo {
     position: absolute;
-    top: 10mm;
+    top: 3mm;
     right: 18mm;
-    height: 13mm;
+    height: 12mm;
     width: auto;
     object-fit: contain;
     z-index: 2;
@@ -337,6 +337,8 @@ table {
     hyphens: none;
     text-align: left;
     vertical-align: middle;
+    overflow: hidden;
+    max-width: 0;
 }
 
 .incident-data-table th {
