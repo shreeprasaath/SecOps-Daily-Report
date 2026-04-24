@@ -100,7 +100,7 @@ function escapeHtmlCell(val) {
 
 /** Drag resize between column headers (Potential Incidents tables only). */
 const INCIDENT_COL_MIN_PX = 40;
-const DEFAULT_INCIDENT_COL_FRACS = [0.06, 0.12, 0.12, 0.55, 0.15];
+const DEFAULT_INCIDENT_COL_FRACS = [0.04, 0.10, 0.09, 0.22, 0.37, 0.09, 0.09];
 
 function getIncidentDataTables() {
     return document.querySelectorAll('.incident-table-wrap table.incident-data-table');
@@ -110,8 +110,8 @@ function ensureIncidentColgroup(table) {
     let cg = table.querySelector('colgroup');
     if (!cg) {
         cg = document.createElement('colgroup');
-        const cls = ['inc-col-sn', 'inc-col-ticket', 'inc-col-sev', 'inc-col-title', 'inc-col-status'];
-        for (let i = 0; i < 5; i++) {
+        const cls = ['inc-col-sn', 'inc-col-ticket', 'inc-col-sev', 'inc-col-title', 'inc-col-obs', 'inc-col-status', 'inc-col-tfp'];
+        for (let i = 0; i < 7; i++) {
             const col = document.createElement('col');
             col.className = cls[i];
             cg.appendChild(col);
@@ -131,9 +131,9 @@ function incidentTableInnerWidth(table) {
 
 function readIncidentColWidthsPx(table) {
     const cols = table.querySelectorAll('colgroup col');
-    if (cols.length !== 5) return null;
+    if (cols.length !== 7) return null;
     const out = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 7; i++) {
         const px = parseFloat(cols[i].style.width);
         if (!px || px <= 0) return null;
         out.push(px);
@@ -145,7 +145,7 @@ function applyIncidentColWidthsPx(widthsPx) {
     getIncidentDataTables().forEach(function (table) {
         ensureIncidentColgroup(table);
         const cols = table.querySelectorAll('colgroup col');
-        if (cols.length !== 5) return;
+        if (cols.length !== 7) return;
         widthsPx.forEach(function (px, i) {
             cols[i].style.width = Math.max(INCIDENT_COL_MIN_PX, Math.round(px)) + 'px';
         });
@@ -155,7 +155,7 @@ function applyIncidentColWidthsPx(widthsPx) {
 function normalizeIncidentColWidths(table) {
     ensureIncidentColgroup(table);
     const cols = table.querySelectorAll('colgroup col');
-    if (cols.length !== 5) return;
+    if (cols.length !== 7) return;
     const w = table.clientWidth || table.getBoundingClientRect().width;
     if (!w || w < 80) return;
     let widths = Array.from(cols).map(function (c) {
@@ -199,7 +199,7 @@ function initIncidentColumnResize(table) {
     const theadRow = table.querySelector('thead tr');
     if (!theadRow) return;
     const ths = theadRow.querySelectorAll('th');
-    if (ths.length !== 5) return;
+    if (ths.length !== 7) return;
 
     ensureIncidentColgroup(table);
     const firstInited = Array.from(getIncidentDataTables()).find(function (t) {
@@ -309,7 +309,9 @@ function addRow() {
         + '<td contenteditable="true">#</td>'
         + '<td contenteditable="true">High</td>'
         + '<td contenteditable="true">New Incident</td>'
+        + '<td contenteditable="true"></td>'
         + '<td contenteditable="true">Open</td>'
+        + '<td contenteditable="true">True Positive</td>'
         + '</tr>';
     lastTbody.insertAdjacentHTML('beforeend', row);
     managePagination();
@@ -359,7 +361,7 @@ function refreshBluPineChart() {
 
     const titles = {};
     document.querySelectorAll('.incident-tbody tr').forEach(tr => {
-        if (tr.cells.length > 3) {
+        if (tr.cells.length > 5) {
             let title = tr.cells[3].innerText.trim();
             if (title && title !== '#' && title !== 'Enter observation...' && title !== '-' && title !== 'New Incident') {
                 titles[title] = (titles[title] || 0) + 1;
@@ -505,9 +507,9 @@ function getIncidentNoteReservePx() {
     let hasClosed = false;
     let rowsExist = false;
     document.querySelectorAll('.incident-tbody tr').forEach(function (tr) {
-        if (tr.cells.length > 3) {
+        if (tr.cells.length > 5) {
             rowsExist = true;
-            const status = tr.cells[4].innerText.trim().toLowerCase();
+            const status = tr.cells[5].innerText.trim().toLowerCase();
             if (status.includes('open')) hasOpen = true;
             if (status.includes('close')) hasClosed = true;
         }
@@ -788,7 +790,9 @@ function createNewIncidentPage(afterPage) {
                         <col class="inc-col-ticket">
                         <col class="inc-col-sev">
                         <col class="inc-col-title">
+                        <col class="inc-col-obs">
                         <col class="inc-col-status">
+                        <col class="inc-col-tfp">
                     </colgroup>
                     <thead>
                         <tr>
@@ -796,7 +800,9 @@ function createNewIncidentPage(afterPage) {
                             <th>Ticket No</th>
                             <th>Severity</th>
                             <th>Incident Title</th>
+                            <th>Observation &amp; Recommendation</th>
                             <th>Status</th>
+                            <th>True/False Positive</th>
                         </tr>
                     </thead>
                     <tbody class="incident-tbody"></tbody>
@@ -828,9 +834,9 @@ function updateIncidentNote() {
 
     // Scan ALL incident tables (this naturally excludes the BluPine table which uses .blupine-tbody)
     document.querySelectorAll('.incident-tbody tr').forEach(tr => {
-        if (tr.cells.length > 3) {
+        if (tr.cells.length > 5) {
             rowsExist = true;
-            let status = tr.cells[4].innerText.trim().toLowerCase();
+            let status = tr.cells[5].innerText.trim().toLowerCase();
             if (status.includes('open')) hasOpen = true;
             if (status.includes('close')) hasClosed = true;
         }
@@ -964,7 +970,7 @@ function updatePageNumbers() {
 
     const pin = document.createElement('div');
     pin.className = 'end-doc-pin';
-    pin.innerHTML = '<b>← End of Document →</b>';
+    pin.innerHTML = '← End of Document →';
     const footerRow = lastPage.querySelector('.footer-text-row');
     if (footerRow) {
         lastPage.insertBefore(pin, footerRow);
@@ -989,8 +995,10 @@ function updatePageNumbers() {
 function draw3DEPSChart(canvasEl, value, custName, ratio) {
     ratio = ratio || (window.devicePixelRatio || 1);
     const wrap = canvasEl.parentElement;
-    const cssW = (wrap && wrap.clientWidth > 10) ? wrap.clientWidth : 380;
-    const cssH = (wrap && wrap.clientHeight > 10) ? wrap.clientHeight : 200;
+    let cssW = wrap ? (wrap.clientWidth || wrap.offsetWidth || 400) : 400;
+    let cssH = wrap ? (wrap.clientHeight || wrap.offsetHeight || 280) : 280;
+    if (cssW < 20) cssW = 400;
+    if (cssH < 20) cssH = 280;
 
     canvasEl.width = Math.round(cssW * ratio);
     canvasEl.height = Math.round(cssH * ratio);
@@ -1003,70 +1011,114 @@ function draw3DEPSChart(canvasEl, value, custName, ratio) {
     ctx.scale(ratio, ratio);
 
     const W = cssW, H = cssH;
-    const padL = 48, padR = 20, padT = 30, padB = 10;
-    const chartW = W - padL - padR;
+
+    // Layout — leave room for 3D depth on right
+    const padL = 55, padR = 8, padT = 32, padB = 8;
+    const depth = Math.round(W * 0.14); // 3D depth pixels
+    const chartW = W - padL - padR - depth;
     const chartH = H - padT - padB;
 
-    // Chart title (customer name)
-    ctx.font = 'bold 13px Calibri, Arial, sans-serif';
+    // Depth vector (upper-right, Excel-style perspective)
+    const dX = depth;
+    const dY = Math.round(depth * 0.55);
+
+    // Y scale: next multiple of 20 strictly above value (90 → 100, 100 → 120)
+    const numVal = parseFloat(value) || 0;
+    const maxY = Math.max(20, Math.ceil((numVal + 1) / 20) * 20);
+
+    // Screen y for chart y-value
+    const scY = (v) => padT + chartH - (v / maxY) * chartH;
+
+    // ── Chart title (customer name) ──────────────────────────────────────
+    ctx.font = 'bold 14px Calibri, Arial, sans-serif';
     ctx.fillStyle = '#222';
     ctx.textAlign = 'center';
-    ctx.fillText(custName, padL + chartW / 2, 20);
+    ctx.fillText(custName, padL + (chartW + dX) / 2, 21);
 
-    // Y scale
-    const numVal = parseFloat(value) || 0;
-    const rawMax = Math.max(numVal * 1.3, 20);
-    const niceStep = Math.max(20, Math.ceil(rawMax / 5 / 20) * 20);
-    const maxY = niceStep * 5;
-
-    // Grid + Y labels
-    ctx.font = '10px Calibri, Arial, sans-serif';
-    ctx.fillStyle = '#555';
-    ctx.textAlign = 'right';
-    for (let i = 0; i <= 5; i++) {
-        const yVal = i * niceStep;
-        const yPos = padT + chartH - (yVal / maxY) * chartH;
-        ctx.strokeStyle = '#d0d0d0';
-        ctx.lineWidth = 0.6;
-        ctx.beginPath();
-        ctx.moveTo(padL, yPos);
-        ctx.lineTo(padL + chartW, yPos);
-        ctx.stroke();
-        ctx.fillStyle = '#555';
-        ctx.fillText(yVal, padL - 5, yPos + 4);
-    }
-
-    // 3D bar geometry
-    const barW = Math.min(chartW * 0.30, 100);
-    const dX = barW * 0.48;
-    const dY = barW * 0.22;
-    const barX = padL + (chartW - barW) / 2 - dX / 2;
-    const barHpx = Math.max(2, (numVal / maxY) * chartH);
-    const barY = padT + chartH - barHpx;
-
-    // Right face (darker)
-    ctx.fillStyle = '#2E5F9E';
+    // ── Back-wall fill (parallelogram) ───────────────────────────────────
+    // Corners: front-top-left → back-top-right → back-bottom-right → front-bottom-left
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.moveTo(barX + barW, barY);
-    ctx.lineTo(barX + barW + dX, barY - dY);
-    ctx.lineTo(barX + barW + dX, barY - dY + barHpx);
-    ctx.lineTo(barX + barW, barY + barHpx);
+    ctx.moveTo(padL,           padT);
+    ctx.lineTo(padL + chartW + dX, padT - dY);
+    ctx.lineTo(padL + chartW + dX, padT + chartH - dY);
+    ctx.lineTo(padL,           padT + chartH);
     ctx.closePath();
     ctx.fill();
 
-    // Front face
+    // ── Diagonal grid lines (Excel 3D back-wall style) ───────────────────
+    // Each line goes from (padL, scY(v)) → (padL+chartW+dX, scY(v)−dY)
+    ctx.strokeStyle = '#c8c8c8';
+    ctx.lineWidth = 0.7;
+    for (let v = 0; v <= maxY; v += 20) {
+        const yFront = scY(v);
+        ctx.beginPath();
+        ctx.moveTo(padL, yFront);
+        ctx.lineTo(padL + chartW + dX, yFront - dY);
+        ctx.stroke();
+    }
+
+    // ── Back-wall border outline ─────────────────────────────────────────
+    ctx.strokeStyle = '#b0b0b0';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(padL,           padT);
+    ctx.lineTo(padL + chartW + dX, padT - dY);
+    ctx.lineTo(padL + chartW + dX, padT + chartH - dY);
+    ctx.lineTo(padL,           padT + chartH);
+    ctx.closePath();
+    ctx.stroke();
+
+    // ── Y-axis labels ────────────────────────────────────────────────────
+    ctx.font = '11px Calibri, Arial, sans-serif';
+    ctx.fillStyle = '#444';
+    ctx.textAlign = 'right';
+    for (let v = 0; v <= maxY; v += 20) {
+        ctx.fillText(v, padL - 5, scY(v) + 4);
+    }
+
+    // ── 3D Bar ───────────────────────────────────────────────────────────
+    const barW  = Math.min(chartW * 0.32, 105);
+    const barX  = padL + (chartW - barW) / 2;
+    const barHpx = Math.max(2, Math.round((numVal / maxY) * chartH));
+    const barY  = padT + chartH - barHpx;
+
+    // Right face (darker blue)
+    ctx.fillStyle = '#2F619E';
+    ctx.beginPath();
+    ctx.moveTo(barX + barW,       barY);
+    ctx.lineTo(barX + barW + dX,  barY - dY);
+    ctx.lineTo(barX + barW + dX,  barY - dY + barHpx);
+    ctx.lineTo(barX + barW,       barY + barHpx);
+    ctx.closePath();
+    ctx.fill();
+
+    // Front face (medium blue — draw after back-wall so it sits in front)
     ctx.fillStyle = '#5b9bd5';
     ctx.fillRect(barX, barY, barW, barHpx);
 
-    // Top face (lighter)
-    ctx.fillStyle = '#91BFDC';
+    // Top face (lighter blue)
+    ctx.fillStyle = '#A8D0E8';
     ctx.beginPath();
-    ctx.moveTo(barX, barY);
-    ctx.lineTo(barX + barW, barY);
+    ctx.moveTo(barX,          barY);
+    ctx.lineTo(barX + barW,   barY);
     ctx.lineTo(barX + barW + dX, barY - dY);
-    ctx.lineTo(barX + dX, barY - dY);
+    ctx.lineTo(barX + dX,     barY - dY);
     ctx.closePath();
     ctx.fill();
+
+    // Subtle outline on front face
+    ctx.strokeStyle = '#4a85bb';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(barX, barY, barW, barHpx);
+
+    // Left Y-axis line (draw on top of everything for visibility)
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padL, padT);
+    ctx.lineTo(padL, padT + chartH);
+    ctx.stroke();
 
     ctx.restore();
 }
@@ -1199,17 +1251,25 @@ document.getElementById('incidentCsv').addEventListener('change', function (e) {
 
             const ticketCol = headers.find(h => h.toUpperCase().includes("TICKET")) || "Ticket No";
             const titleCol = headers.find(h => h.toUpperCase().includes("INCIDENT TITLE") || h.toUpperCase() === "TITLE" || h.toUpperCase() === "ALERT NAME") || "Incident Title";
+            const obsCol = headers.find(h => h.toUpperCase().includes("OBSERVATION")) || "Observation & Recommendation";
             const statusCol = headers.find(h => h.toUpperCase() === "STATUS") || "Status";
+            const tfpCol = headers.find(h => h.toUpperCase().includes("TRUE/FALSE") || h.toUpperCase().includes("TFP")) || "True/False Positive";
 
             let currentTbody = document.querySelector('.incident-tbody');
             if (results.data.length > 0) {
                 results.data.forEach((row, i) => {
+                    const obsRaw = row[obsCol] || '';
+                    const obsHtml = escapeHtmlCell(obsRaw)
+                        .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+                        .replace(/\n/g, '<br>');
                     const tr = '<tr>'
                         + `<td contenteditable="true">${i + 1}</td>`
                         + `<td contenteditable="true">${escapeHtmlCell(row[ticketCol] || '#')}</td>`
                         + `<td contenteditable="true">${escapeHtmlCell(row[sevCol] || 'N/A')}</td>`
                         + `<td contenteditable="true">${escapeHtmlCell(row[titleCol] || 'N/A')}</td>`
+                        + `<td contenteditable="true">${obsHtml}</td>`
                         + `<td contenteditable="true">${escapeHtmlCell(row[statusCol] || 'Open')}</td>`
+                        + `<td contenteditable="true">${escapeHtmlCell(row[tfpCol] || 'True Positive')}</td>`
                         + '</tr>';
                     currentTbody.insertAdjacentHTML('beforeend', tr);
                 });
@@ -1219,7 +1279,9 @@ document.getElementById('incidentCsv').addEventListener('change', function (e) {
                     + '<td contenteditable="true">#</td>'
                     + '<td contenteditable="true">High</td>'
                     + '<td contenteditable="true">New Incident</td>'
+                    + '<td contenteditable="true"></td>'
                     + '<td contenteditable="true">Open</td>'
+                    + '<td contenteditable="true">True Positive</td>'
                     + '</tr>';
             }
 
@@ -1307,10 +1369,8 @@ window.onload = () => {
     let formattedToday = ("0" + todayDay).slice(-2) + "-" + ("0" + todayMonth).slice(-2) + "-" + todayYear;
 
     let n1Day = date.getDate();
-    let suffixN1 = n1Day === 1 || n1Day === 21 || n1Day === 31 ? 'st' : n1Day === 2 || n1Day === 22 ? 'nd' : n1Day === 3 || n1Day === 23 ? 'rd' : 'th';
-    let suffixT = todayDay === 1 || todayDay === 21 || todayDay === 31 ? 'st' : todayDay === 2 || todayDay === 22 ? 'nd' : todayDay === 3 || todayDay === 23 ? 'rd' : 'th';
-
-    let docPrepText = `${formattedToday} (9PM ${n1Day}${suffixN1} ${monthNames[date.getMonth()]} to 9PM ${todayDay}${suffixT} ${monthNames[today.getMonth()]})`;
+    let formattedTodaySlash = ("0" + todayDay).slice(-2) + "/" + ("0" + todayMonth).slice(-2) + "/" + todayYear;
+    let docPrepText = `${formattedTodaySlash} (09 PM ${n1Day} ${monthNames[date.getMonth()]} to 09 PM ${todayDay} ${monthNames[today.getMonth()]})`;
     document.querySelectorAll('.auto-date-doc-prep').forEach(el => el.innerText = docPrepText);
 
     // Expose date range for FP text generation
