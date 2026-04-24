@@ -4,33 +4,29 @@ Chart.defaults.animation = false;
 let activeCharts = {};
 const themeColors = ['#5b9bd5', '#ed7d31', '#a5a5a5', '#ffc000', '#4472c4', '#70ad47', '#255e91', '#9e480e', '#636363', '#997300'];
 
-// 16 = ~8K sharpness; charts render at (css size × this ratio) for maximum PDF quality
-var PRINT_DPI_RATIO = 16;
+// Charts render at 4× CSS size — sharp at 300 dpi when printed
+var SNAPSHOT_RATIO = 4;
 
-function setChartsHighDPIForPrint(ratio) {
-    ratio = ratio || PRINT_DPI_RATIO;
-    Object.keys(activeCharts).forEach(function (key) {
-        var ch = activeCharts[key];
-        if (ch && ch.canvas) {
-            if (ch.options) ch.options.devicePixelRatio = ratio;
-            ch.resize();
-        }
-    });
+function snapshotChart(canvasEl) {
+    const wrap = canvasEl.closest('.canvas-wrap') || canvasEl.parentElement;
+    let img = wrap.querySelector('img.chart-snapshot');
+    if (!img) {
+        img = document.createElement('img');
+        img.className = 'chart-snapshot';
+        img.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:block;pointer-events:none;';
+        wrap.appendChild(img);
+    }
+    img.src = canvasEl.toDataURL('image/png');
+    canvasEl.style.visibility = 'hidden';
 }
 
 function printReport() {
-    setChartsHighDPIForPrint(PRINT_DPI_RATIO);
-    // Allow charts to re-render at high DPI before print capture
-    requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-            function onAfterPrint() {
-                window.removeEventListener('afterprint', onAfterPrint);
-                window.location.reload();
-            }
-            window.addEventListener('afterprint', onAfterPrint);
-            window.print();
-        });
-    });
+    function onAfterPrint() {
+        window.removeEventListener('afterprint', onAfterPrint);
+        window.location.reload();
+    }
+    window.addEventListener('afterprint', onAfterPrint);
+    window.print();
 }
 
 function sync() {
@@ -403,6 +399,7 @@ function refreshBluPineChart() {
         data: { labels: ['Count'], datasets: bpDatasets },
         options: {
             maintainAspectRatio: false,
+            devicePixelRatio: SNAPSHOT_RATIO,
             layout: { padding: { top: 25, left: 10, right: 10, bottom: 5 } },
             plugins: {
                 legend: {
@@ -430,6 +427,7 @@ function refreshBluPineChart() {
             }
         }
     });
+    requestAnimationFrame(() => snapshotChart(canvas));
 }
 
 // --- Flexible pagination: responds to typing AND row height changes (wrapping text) ---
@@ -1105,16 +1103,17 @@ function refreshEPS() {
     const canvasEl = document.getElementById('epsChart');
     if (!canvasEl) return;
 
-    draw3DEPSChart(canvasEl, val, custName, window.devicePixelRatio || 1);
+    draw3DEPSChart(canvasEl, val, custName, SNAPSHOT_RATIO);
+    snapshotChart(canvasEl);
 
-    // Store a Chart.js-compatible object so setChartsHighDPIForPrint works
     activeCharts.eps = {
         canvas: canvasEl,
         _val: val,
         _custName: custName,
-        options: { devicePixelRatio: window.devicePixelRatio || 1 },
+        options: { devicePixelRatio: SNAPSHOT_RATIO },
         resize: function () {
-            draw3DEPSChart(this.canvas, this._val, this._custName, this.options.devicePixelRatio || window.devicePixelRatio || 1);
+            draw3DEPSChart(this.canvas, this._val, this._custName, SNAPSHOT_RATIO);
+            snapshotChart(this.canvas);
         },
         destroy: function () {}
     };
@@ -1136,14 +1135,16 @@ document.getElementById('deviceCsv').addEventListener('change', function (e) {
 
 function renderDeviceChart(labels, data) {
     if (activeCharts.dev) activeCharts.dev.destroy();
+    const canvas = document.getElementById('deviceChart');
     const datasets = labels.map((l, i) => ({
         label: l, data: labels.map((_, idx) => idx === i ? data[i] : null),
         backgroundColor: themeColors[i % themeColors.length]
     }));
-    activeCharts.dev = new Chart(document.getElementById('deviceChart'), {
+    activeCharts.dev = new Chart(canvas, {
         type: 'bar', data: { labels, datasets },
         options: {
             maintainAspectRatio: false,
+            devicePixelRatio: SNAPSHOT_RATIO,
             plugins: {
                 legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } },
                 datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold' }, formatter: (v) => v || '' }
@@ -1151,6 +1152,7 @@ function renderDeviceChart(labels, data) {
             scales: { x: { display: false, stacked: true }, y: { beginAtZero: true } }
         }
     });
+    requestAnimationFrame(() => snapshotChart(canvas));
 }
 
 document.getElementById('incidentCsv').addEventListener('change', function (e) {
@@ -1256,7 +1258,8 @@ document.getElementById('incidentCsv').addEventListener('change', function (e) {
     });
 });
 function renderIncidentChart(id, counts, label) {
-    const ctx = document.getElementById(id).getContext('2d');
+    const canvas = document.getElementById(id);
+    const ctx = canvas.getContext('2d');
     if (activeCharts[id]) activeCharts[id].destroy();
 
     const maxCount = Math.max(counts.HIGH, counts.MEDIUM, counts.LOW);
@@ -1274,6 +1277,7 @@ function renderIncidentChart(id, counts, label) {
         },
         options: {
             responsive: true, maintainAspectRatio: false,
+            devicePixelRatio: SNAPSHOT_RATIO,
             layout: { padding: 15 },
             plugins: {
                 title: { display: showTitle, text: label, font: { size: 16, weight: 'bold' }, color: '#444', padding: { bottom: 10 } },
@@ -1286,6 +1290,7 @@ function renderIncidentChart(id, counts, label) {
             }
         }
     });
+    requestAnimationFrame(() => snapshotChart(canvas));
 }
 
 function updateFPText(fpTotal, fpData) {
