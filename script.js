@@ -100,7 +100,7 @@ function escapeHtmlCell(val) {
 
 /** Drag resize between column headers (Potential Incidents tables only). */
 const INCIDENT_COL_MIN_PX = 40;
-const DEFAULT_INCIDENT_COL_FRACS = [0.04, 0.10, 0.09, 0.22, 0.46, 0.09];
+const DEFAULT_INCIDENT_COL_FRACS = [0.04, 0.10, 0.11, 0.22, 0.41, 0.12];
 
 function getIncidentDataTables() {
     return document.querySelectorAll('.incident-table-wrap table.incident-data-table');
@@ -1030,18 +1030,11 @@ function draw3DEPSChart(canvasEl, value, custName, ratio) {
     ctx.font = 'bold 14px Calibri, Arial, sans-serif';
     ctx.fillStyle = '#222';
     ctx.textAlign = 'center';
-    ctx.fillText(custName, padL + (chartW + dX) / 2, 21);
+    ctx.fillText(custName, padL + chartW / 2, 21);
 
-    // ── Back-wall fill (parallelogram) ───────────────────────────────────
-    // Corners: front-top-left → back-top-right → back-bottom-right → front-bottom-left
+    // ── Back-wall fill (rectangle) ───────────────────────────────────────
     ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(padL,           padT);
-    ctx.lineTo(padL + chartW + dX, padT - dY);
-    ctx.lineTo(padL + chartW + dX, padT + chartH - dY);
-    ctx.lineTo(padL,           padT + chartH);
-    ctx.closePath();
-    ctx.fill();
+    ctx.fillRect(padL, padT, chartW, chartH);
 
     // ── Horizontal grid lines ────────────────────────────────────────────
     ctx.strokeStyle = '#c8c8c8';
@@ -1054,16 +1047,10 @@ function draw3DEPSChart(canvasEl, value, custName, ratio) {
         ctx.stroke();
     }
 
-    // ── Back-wall border outline ─────────────────────────────────────────
+    // ── Back-wall border outline (rectangle) ─────────────────────────────
     ctx.strokeStyle = '#b0b0b0';
     ctx.lineWidth = 0.8;
-    ctx.beginPath();
-    ctx.moveTo(padL,           padT);
-    ctx.lineTo(padL + chartW + dX, padT - dY);
-    ctx.lineTo(padL + chartW + dX, padT + chartH - dY);
-    ctx.lineTo(padL,           padT + chartH);
-    ctx.closePath();
-    ctx.stroke();
+    ctx.strokeRect(padL, padT, chartW, chartH);
 
     // ── Y-axis labels ────────────────────────────────────────────────────
     ctx.font = '11px Calibri, Arial, sans-serif';
