@@ -434,13 +434,13 @@ h3.incident-section-heading {
 
 /* Cover page footer (coloured) */
 .strip-cover-blue {
-    background: #2e358b;
-    width: 45%;
+    background: #2e3486;
+    width: 50%;
 }
 
 .strip-cover-red {
-    background: #ed1c24;
-    width: 55%;
+    background: #e91e21;
+    width: 50%;
 }
 
 /* Inner pages: strip is transparent but keeps height so pagination boundary still works */
