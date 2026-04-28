@@ -1498,3 +1498,426 @@ This discards all local changes and restores the last committed version of those
 ---
 
 *Secure Network Solutions India Pvt Ltd — SOC Daily Report tooling.*
+
+---
+
+## 8. Code Concepts & Prerequisites for Freshers
+
+This section is written specifically for someone who is new to the codebase. It covers what you should study before reading the code, and then explains every important coding pattern used in this project with real examples taken directly from the files.
+
+---
+
+### 8.1 What to Study Before You Start
+
+You do not need to be an expert in all of these. Even a basic understanding of each is enough to follow the code. The table explains *why* each concept matters specifically in this project.
+
+| Concept | Where to learn | Why this project needs it |
+|---------|---------------|--------------------------|
+| **HTML5 DOM** | MDN Web Docs → "Introduction to the DOM" | Every report page is a `<div>`. JavaScript reads and writes these elements constantly — adding rows, moving sections, updating page numbers |
+| **`contenteditable`** | MDN → "contenteditable" | Every editable field in the report (cover title, date, table cells) uses this HTML attribute instead of `<input>` tags. Understanding it is essential to know why clicking text lets you type |
+| **CSS Flexbox** | CSS-Tricks → "A Complete Guide to Flexbox" | The A4 page layout, the two half-height chart containers, the canvas wrappers, and the footer strip all use `display: flex`. Without this, the layout makes no sense |
+| **CSS `@media print`** | MDN → "Using media queries" | The entire dashboard panel is hidden during PDF export using `@media print`. Colour forcing (`print-color-adjust: exact`) is also set here |
+| **JavaScript ES6+** | javascript.info → "The Modern JavaScript Tutorial" | The script uses arrow functions (`=>`), template literals (`` `Hello ${name}` ``), `const`/`let`, array methods (`map`, `find`, `forEach`), and destructuring throughout |
+| **DOM Event Listeners** | MDN → "addEventListener" | `input`, `change`, `keydown`, `mousedown`, `mousemove`, `mouseup`, `resize`, `load` — all used. Understanding how events bubble and how to attach/remove listeners is essential |
+| **HTML5 Canvas 2D API** | MDN → "Canvas tutorial" | The EPS 3D bar chart is drawn entirely by hand using `ctx.fillRect`, `ctx.beginPath`, `ctx.moveTo`, `ctx.lineTo`, `ctx.fill`, `ctx.stroke`. Chart.js is NOT used for this chart |
+| **Chart.js basics** | chartjs.org → "Getting Started" | Four of the five charts use `new Chart(canvasElement, config)`. You need to understand the `data`, `options`, `plugins`, and `scales` config keys |
+| **PapaParse** | papaparse.com → "Documentation" | Both CSV uploads are parsed with PapaParse. Knowing `Papa.parse(file, { header: true, complete: fn })` is enough |
+| **`ResizeObserver` API** | MDN → "ResizeObserver" | The pagination system watches `<tbody>` height using a ResizeObserver. When a row's text wraps to a new line and makes the tbody taller, the observer fires and pagination re-runs automatically |
+| **`requestAnimationFrame`** | MDN → "requestAnimationFrame" | Used in two places: (1) waiting one paint cycle before snapshotting a chart canvas, (2) waiting for the DOM to re-render before measuring element positions in pagination |
+| **Git basics** | git-scm.com → "Getting Started" | `git clone`, `git add`, `git commit -m`, `git push` — the workflow used to deploy changes to this project |
+| **Browser DevTools** | Chrome DevTools docs | Use the Elements panel to inspect page structure, the Console to run JavaScript, and the Network panel to verify cache-busted files are loading fresh |
+
+---
+
+### 8.2 Key Code Patterns Explained
+
+The following patterns appear repeatedly throughout `script.js`, `style.css`, and `index.html`. Each is explained with the actual code from the project.
+
+---
+
+#### Pattern 1 — `contenteditable`: Making HTML Elements Directly Editable
+
+**What it is:** An HTML attribute that turns any element into a text editor. The user can click it and type.
+
+**Why this project uses it:** The report needs inline editing — the user should be able to click on the cover title or a table cell and change the text directly, without a separate form.
+
+**In the code (`index.html`):**
+```html
+<!-- Cover page title — user can click and retype it -->
+<h1 class="cover-title" id="outCoverName" contenteditable="true">
+    RMZ Corp. - SOC Daily Report
+</h1>
+
+<!-- Incident table cell — user can click and type -->
+<td contenteditable="true">Medium</td>
+```
+
+**Reading the value in JavaScript:**
+```javascript
+// Use .innerText (not .value — that's for <input> elements)
+const name = document.getElementById('outCoverName').innerText;
+```
+
+**What breaks if you get it wrong:** If you use `.value` on a `contenteditable` element, you get `undefined`. Always use `.innerText` or `.textContent`.
+
+---
+
+#### Pattern 2 — `ResizeObserver`: Watching for Height Changes
+
+**What it is:** A browser API that calls your function whenever a DOM element changes its size (width or height).
+
+**Why this project uses it:** When a user types a long incident title that wraps to a second line, the `<tbody>` row becomes taller. Without a ResizeObserver, the pagination engine would not know this happened. The observer detects the height change and triggers re-pagination automatically.
+
+**In the code (`script.js`):**
+```javascript
+// Create one observer that fires schedulePagination() on any size change
+const tbodyResizeObserver = new ResizeObserver(() => {
+    schedulePagination();
+});
+
+// Register a tbody with the observer
+function observeTbody(tbody) {
+    if (tbody) tbodyResizeObserver.observe(tbody);
+}
+
+// Register all existing tbodies on page load
+document.querySelectorAll('.incident-tbody').forEach(observeTbody);
+
+// Also register new tbodies created by pagination
+const newTbody = newPage.querySelector('.incident-tbody');
+observeTbody(newTbody);
+```
+
+**What breaks if you get it wrong:** If you forget to call `observeTbody` on a newly created continuation page's tbody, the auto-pagination won't fire when that page's content grows.
+
+---
+
+#### Pattern 3 — Debouncing: Don't Run Expensive Code on Every Keystroke
+
+**What it is:** A technique where you delay running a function until the user has stopped doing something for a set time. If they do it again before the delay ends, the timer resets.
+
+**Why this project uses it:** `managePagination()` measures dozens of DOM elements with `getBoundingClientRect()` — expensive work. Running it on every single keypress would freeze the browser. The debounce waits 300ms after the last keypress before running.
+
+**In the code (`script.js`):**
+```javascript
+let paginationTimeout; // stores the timer ID
+
+function schedulePagination() {
+    clearTimeout(paginationTimeout);       // cancel any pending run
+    paginationTimeout = setTimeout(() => { // schedule a new run in 300ms
+        managePagination();
+    }, 300);
+}
+
+// Called on every input event — but managePagination only runs
+// 300ms after the user stops typing
+document.addEventListener('input', function (e) {
+    if (e.target.closest('.incident-tbody')) {
+        schedulePagination(); // debounced — safe to call on every keystroke
+    }
+});
+```
+
+**What breaks if you get it wrong:** Calling `managePagination()` directly on every `input` event (without debounce) causes the browser to stutter on every keypress because it's doing layout measurement work 10+ times per second.
+
+---
+
+#### Pattern 4 — `requestAnimationFrame`: Wait for the Browser to Paint
+
+**What it is:** Schedules a function to run just before the browser repaints the screen. It guarantees the DOM has been laid out and painted before your code reads measurements from it.
+
+**Why this project uses it:** After Chart.js draws a chart, the canvas pixels may not have been flushed to the screen yet. Calling `canvas.toDataURL()` one frame later ensures the drawing is complete.
+
+**In the code (`script.js`):**
+```javascript
+// Wrong — might capture a blank canvas if Chart.js hasn't painted yet
+activeCharts.dev = new Chart(canvas, config);
+snapshotChart(canvas); // ← too early
+
+// Correct — wait one paint cycle
+activeCharts.dev = new Chart(canvas, config);
+requestAnimationFrame(() => snapshotChart(canvas)); // ← safe
+```
+
+**Double rAF pattern** (used when the DOM also needs to reflow):
+```javascript
+requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+        managePagination(); // runs after two paint cycles — layout is stable
+    });
+});
+```
+
+---
+
+#### Pattern 5 — `canvas.toDataURL()`: Freezing a Chart as an Image
+
+**What it is:** A Canvas API method that exports the current contents of a `<canvas>` element as a Base64-encoded PNG data URL (a string starting with `data:image/png;base64,...`).
+
+**Why this project uses it:** Live canvas elements cause scroll jank. By exporting to a PNG and displaying it as an `<img>`, the browser can hand it to the GPU compositor — smooth scrolling with zero JavaScript.
+
+**In the code (`script.js`):**
+```javascript
+function snapshotChart(canvasEl) {
+    const wrap = canvasEl.closest('.canvas-wrap') || canvasEl.parentElement;
+
+    // Get or create the <img> that will overlay the canvas
+    let img = wrap.querySelector('img.chart-snapshot');
+    if (!img) {
+        img = document.createElement('img');
+        img.className = 'chart-snapshot';
+        // Position absolutely so it covers the canvas exactly
+        img.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:block;pointer-events:none;';
+        wrap.appendChild(img);
+    }
+
+    img.src = canvasEl.toDataURL('image/png'); // export canvas → PNG data URL
+    canvasEl.style.visibility = 'hidden';       // hide canvas (keeps its space)
+}
+```
+
+**4× resolution for print quality:**
+```javascript
+var SNAPSHOT_RATIO = 4; // render at 4× screen size
+
+// Charts are told to render internally at 4× via devicePixelRatio
+options: {
+    devicePixelRatio: SNAPSHOT_RATIO, // 4× internal resolution
+}
+// Result: a 400px canvas renders internally at 1600px → ~300 DPI on printed A4
+```
+
+---
+
+#### Pattern 6 — `table-layout: fixed` + `<colgroup>`: Enforcing Column Widths
+
+**What it is:** By default, browser tables size columns based on content. `table-layout: fixed` changes this — column widths are set by the `<colgroup>` element and content wraps within them regardless of length.
+
+**Why this project uses it:** Without this, a long incident title would push the Status column off the right edge of the A4 page. With `fixed` layout, columns have exact proportional widths and long text wraps down within its cell.
+
+**In `style.css`:**
+```css
+.incident-data-table {
+    table-layout: fixed; /* column widths come from <col>, not content */
+    width: 100%;
+}
+```
+
+**In `index.html`:**
+```html
+<colgroup>
+    <col class="inc-col-sn">      <!-- 6%  — set in CSS -->
+    <col class="inc-col-ticket">  <!-- 16% -->
+    <col class="inc-col-sev">     <!-- 14% -->
+    <col class="inc-col-title">   <!-- 46% -->
+    <col class="inc-col-status">  <!-- 18% -->
+</colgroup>
+```
+
+**JavaScript overrides these with pixel values at runtime:**
+```javascript
+// Converts fractions to pixels and applies them
+function applyIncidentColWidthsPx(widthsPx) {
+    cols[i].style.width = Math.max(40, Math.round(widthsPx[i])) + 'px';
+}
+```
+
+**What breaks if you get it wrong:** Without `table-layout: fixed`, the browser ignores `<col>` widths and sizes columns by content — the Status column disappears off the right edge when a title is long.
+
+---
+
+#### Pattern 7 — `getBoundingClientRect()`: Measuring Element Position on Screen
+
+**What it is:** A DOM method that returns the exact pixel position and dimensions of an element relative to the browser viewport (top, bottom, left, right, width, height).
+
+**Why this project uses it:** The pagination engine needs to know whether a table row's bottom edge has crossed the footer's top edge. It cannot know this from CSS alone — it has to measure the live rendered positions.
+
+**In the code (`script.js`):**
+```javascript
+// Get the pixel position of the footer strip
+let footerStrip = page.querySelector('.footer-strip');
+let pageBottom = footerStrip.getBoundingClientRect().top;
+
+// Get the pixel position of the last table row
+let lastRow = tbody.rows[tbody.rows.length - 1];
+let rowRect = lastRow.getBoundingClientRect();
+
+// If the row's bottom goes past the footer → move it to the next page
+if (rowRect.bottom > pageBottom - 10) {
+    // move row to next page...
+}
+```
+
+**What breaks if you get it wrong:** If you read `getBoundingClientRect()` before `requestAnimationFrame`, the browser may not have laid out the new content yet and you get stale measurements — rows move to the wrong page or pagination loops forever.
+
+---
+
+#### Pattern 8 — `insertAdjacentHTML`: Adding HTML Without Rebuilding the DOM
+
+**What it is:** A DOM method that parses an HTML string and inserts it at a specific position relative to an element — `'beforeend'` adds inside the element, after the last child.
+
+**Why this project uses it:** When adding a new row to the incident table, building the full HTML as a string and inserting it in one call is faster and simpler than creating each `<td>` element individually with `document.createElement`.
+
+**In the code (`script.js`):**
+```javascript
+function addRow() {
+    const lastTbody = document.querySelectorAll('.incident-tbody')[...];
+    const rowCount = document.querySelectorAll('.incident-tbody tr').length + 1;
+
+    // Build the row as an HTML string
+    const row = '<tr>'
+        + `<td contenteditable="true">${rowCount}</td>`
+        + '<td contenteditable="true">#</td>'
+        + '<td contenteditable="true">High</td>'
+        + '<td contenteditable="true">New Incident</td>'
+        + '<td contenteditable="true">Open</td>'
+        + '</tr>';
+
+    // Insert at the end of the tbody — no DOM rebuild, just append
+    lastTbody.insertAdjacentHTML('beforeend', row);
+}
+```
+
+**What breaks if you get it wrong:** Never use `innerHTML +=` to append — it destroys and recreates the entire existing DOM inside the element, losing all event listeners and `contenteditable` cursor positions.
+
+---
+
+#### Pattern 9 — PapaParse Loose Column Detection
+
+**What it is:** Instead of requiring exact column header names, the CSV handler searches for headers that *contain* a keyword. This makes the tool tolerant of minor variations in CSV format.
+
+**Why this project uses it:** Different analysts may export CSVs with slightly different headers (`Ticket NO`, `Ticket Number`, `ticket_id` — all should work for the ticket column).
+
+**In the code (`script.js`):**
+```javascript
+// headers = array of column names from the CSV first row
+const headers = results.meta.fields;
+
+// Find the first header that contains "severity" (case-insensitive)
+const sevCol  = headers.find(h => h.toUpperCase().includes("SEVERITY"));
+const ticketCol = headers.find(h => h.toUpperCase().includes("TICKET"));
+const titleCol  = headers.find(h =>
+    h.toUpperCase().includes("INCIDENT TITLE") ||
+    h.toUpperCase() === "TITLE" ||
+    h.toUpperCase() === "ALERT NAME"
+);
+
+// Use the found header name to read each row's value
+results.data.forEach(row => {
+    const sev = row[sevCol]; // works regardless of exact header name
+});
+```
+
+**What breaks if you get it wrong:** If you require exact header names (e.g. `if (header === 'Severity')`), the chart won't populate if the analyst's CSV uses `SEVERITY` or `Incident Severity`.
+
+---
+
+#### Pattern 10 — `escapeHtmlCell`: Preventing XSS from CSV Data
+
+**What it is:** XSS (Cross-Site Scripting) is a security vulnerability where malicious code in user input gets executed by the browser. If a CSV cell contains `<script>alert('hacked')</script>` and you insert it directly into `innerHTML`, the browser runs it.
+
+**Why this project uses it:** CSV data is inserted into the DOM via `insertAdjacentHTML` (which parses HTML). Without sanitisation, a CSV cell containing HTML tags could inject scripts or break the page layout.
+
+**In the code (`script.js`):**
+```javascript
+function escapeHtmlCell(val) {
+    if (val == null) return '';
+    return String(val)
+        .replace(/&/g, '&amp;')   // & → &amp;
+        .replace(/</g, '&lt;')    // < → &lt;   (stops <script> from running)
+        .replace(/>/g, '&gt;')    // > → &gt;
+        .replace(/"/g, '&quot;'); // " → &quot;
+}
+
+// Usage when building row HTML from CSV data:
+`<td contenteditable="true">${escapeHtmlCell(row[titleCol])}</td>`
+// If row[titleCol] = '<b>Bold</b>', it renders as the literal text <b>Bold</b>
+// instead of making the text bold (or worse, running a script)
+```
+
+**What breaks if you get it wrong:** A CSV with `<img src=x onerror="alert(1)">` in the Incident Title column would execute JavaScript in the browser if not escaped.
+
+---
+
+#### Pattern 11 — `contain: layout style`: CSS Performance Isolation
+
+**What it is:** A CSS property that tells the browser "changes inside this element cannot affect the layout of elements outside it." The browser can skip re-calculating the rest of the page when something changes inside a contained element.
+
+**Why this project uses it:** Without containment, when the pagination engine moves a row from one page to another, the browser recalculates the layout of all 6+ pages. With `contain: layout style` on each `.page`, only the affected page is recalculated.
+
+**In `style.css`:**
+```css
+.page {
+    contain: layout style; /* this page's internals don't affect other pages */
+}
+```
+
+**What breaks if you get it wrong:** Without this, scrolling through a long report with many pages is slow because the browser keeps recalculating the entire document layout. With it, each A4 page is an isolated layout island.
+
+---
+
+#### Pattern 12 — `transform: translateZ(0)`: GPU Layer Promotion
+
+**What it is:** A CSS trick that forces the browser to move an element to its own GPU compositor layer. On that layer, the browser can scroll and animate without involving the CPU/main thread.
+
+**Why this project uses it:** Chart canvas elements were causing scroll jank because the browser had to repaint them on the CPU during scroll. Moving them to the GPU layer (even as hidden canvases) removes them from the main-thread paint path.
+
+**In `style.css`:**
+```css
+canvas {
+    transform: translateZ(0);    /* promote to GPU layer */
+    backface-visibility: hidden; /* prevents flicker on some browsers */
+}
+```
+
+**Note:** After the snapshot system was added, the canvas is hidden (`visibility: hidden`) and the `<img>` is shown. The `<img>` benefits from GPU compositing automatically since it is a simple texture. The `translateZ(0)` on canvas is now a belt-and-suspenders measure.
+
+---
+
+#### Pattern 13 — `?v=N` Cache Busting
+
+**What it is:** Browsers cache CSS and JS files aggressively to avoid re-downloading them. Adding a query string like `?v=19` to the URL makes the browser treat it as a *different* URL — forcing a fresh download.
+
+**Why this project uses it:** When a developer updates `style.css` or `script.js`, analysts opening the tool would still see the old version until the browser cache expires (which could be hours or days). Bumping the version number forces everyone to get the new file immediately.
+
+**In `index.html`:**
+```html
+<link rel="stylesheet" href="style.css?v=20">
+<script src="script.js?v=20"></script>
+```
+
+**Workflow:** Every time you deploy a change to `style.css` or `script.js`, change `v=20` to `v=21` (or any higher number) in both lines.
+
+**What breaks if you get it wrong:** Analysts see your old code and wonder why the bug you "fixed" is still there. Always bump the version after every deployment.
+
+---
+
+#### Pattern 14 — Template Literals for Dynamic HTML
+
+**What it is:** ES6 template literals (backtick strings) allow you to embed JavaScript expressions directly inside a string using `${expression}`. This is used to build HTML strings dynamically.
+
+**Why this project uses it:** When populating the incident table from CSV data, each row is built as an HTML string with the actual data values inserted inline. Template literals make this readable and safe when combined with `escapeHtmlCell`.
+
+**In the code (`script.js`):**
+```javascript
+results.data.forEach((row, i) => {
+    // Build one complete <tr> as a string with CSV values embedded
+    const tr = '<tr>'
+        + `<td contenteditable="true">${i + 1}</td>`
+        + `<td contenteditable="true">${escapeHtmlCell(row[ticketCol] || '#')}</td>`
+        + `<td contenteditable="true">${escapeHtmlCell(row[sevCol] || 'N/A')}</td>`
+        + `<td contenteditable="true">${escapeHtmlCell(row[titleCol] || 'N/A')}</td>`
+        + `<td contenteditable="true">${escapeHtmlCell(row[statusCol] || 'Open')}</td>`
+        + '</tr>';
+
+    currentTbody.insertAdjacentHTML('beforeend', tr);
+});
+```
+
+**The `|| 'fallback'` pattern:** If a CSV cell is empty or missing, `row[col]` returns `undefined`. The `|| 'N/A'` provides a default value so the cell is never blank.
+
+**What breaks if you get it wrong:** Forgetting `escapeHtmlCell` around any CSV value means that value is injected raw into the DOM — a security risk and potential page-breaking bug.
+
+---
+
+*Secure Network Solutions India Pvt Ltd — SOC Daily Report tooling.*
