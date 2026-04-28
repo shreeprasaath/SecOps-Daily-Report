@@ -444,8 +444,8 @@ h3.incident-section-heading {
 }
 
 /* Inner pages: strip is transparent but keeps height so pagination boundary still works */
-.strip-blue  { background: transparent; width: 45%; }
-.strip-pink  { background: transparent; width: 55%; }
+.strip-blue  { background: transparent; width: 50%; }
+.strip-pink  { background: transparent; width: 50%; }
 
 .footer-text-row {
     position: absolute;
