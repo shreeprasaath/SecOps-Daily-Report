@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=22">
+    <link rel="stylesheet" href="style.css?v=23">
 </head>
 
 <body>
@@ -110,7 +110,7 @@
     <div class="page" id="p4">
         <img class="sns-logo-img page-sns-logo" src="" alt="">
         <h3 class="section-header">1. Daily Average EPS</h3>
-        <div class="box-border eps-chart-box">
+        <div class="box-border eps-chart-box chart-box-solo">
             <div class="canvas-wrap"><canvas id="epsChart"></canvas></div>
             <table class="eps-legend-table">
                 <thead>
@@ -132,7 +132,7 @@
     <div class="page" id="p5">
         <img class="sns-logo-img page-sns-logo" src="" alt="">
         <h3 class="section-header">2. Reporting Device - Average EPS</h3>
-        <div class="box-border">
+        <div class="box-border chart-box-solo">
             <div class="canvas-wrap"><canvas id="deviceChart"></canvas></div>
         </div>
         <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num">5</span></div>
@@ -144,7 +144,7 @@
         <img class="sns-logo-img page-sns-logo" src="" alt="">
         <h3 class="section-header">3. Incident Severity Count</h3>
         <p id="sevBlankMsg" style="margin-top:8px;font-size:9.5pt;line-height:1.4;display:block;"></p>
-        <div class="box-border" id="sevChartContainer" style="display:none;">
+        <div class="box-border chart-box-solo" id="sevChartContainer" style="display:none;">
             <div class="canvas-wrap"><canvas id="sevChart"></canvas></div>
         </div>
         <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num">6</span></div>
@@ -156,7 +156,7 @@
         <img class="sns-logo-img page-sns-logo" src="" alt="">
         <h3 class="section-header">4. False Positive &amp; True Positive</h3>
         <p id="tpBlankMsg" style="margin-top:8px;font-size:9.5pt;line-height:1.4;display:block;"></p>
-        <div class="box-border" id="tpChartContainer" style="display:none;">
+        <div class="box-border chart-box-solo" id="tpChartContainer" style="display:none;">
             <div class="canvas-wrap" id="tpWrap"><canvas id="tpChart"></canvas></div>
         </div>
         <div id="fpTextSection" style="margin-top:6px;">
@@ -223,7 +223,7 @@
         <div class="footer-strip"><div class="strip-blue"></div><div class="strip-pink"></div></div>
     </div>
 
-    <script src="script.js?v=22"></script>
+    <script src="script.js?v=23"></script>
 </body>
 
 </html>
