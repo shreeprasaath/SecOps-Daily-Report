@@ -639,18 +639,18 @@ function managePagination() {
                     const roomLeft = footerTop - sec5Top;
                     if (roomLeft < 150) {
                         // Not enough room — create a new page and move section5Wrapper there
-                        let overflowPage = document.getElementById('p7');
+                        let overflowPage = document.getElementById('p9');
                         if (!overflowPage) {
                             overflowPage = document.createElement('div');
                             overflowPage.className = 'page';
-                            overflowPage.id = 'p7';
+                            overflowPage.id = 'p9';
                             overflowPage.innerHTML = `<img class="sns-logo-img page-sns-logo" src="${(document.querySelector('.page-sns-logo') || {src:''}).src}" alt="">`
-                                + '<div id="p7Container" style="flex-grow:0;display:flex;flex-direction:column;position:relative;padding-top:10px;"></div>'
+                                + '<div id="p9Container" style="flex-grow:0;display:flex;flex-direction:column;position:relative;padding-top:10px;"></div>'
                                 + '<div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num"></span></div>'
                                 + '<div class="footer-strip"><div class="strip-blue"></div><div class="strip-pink"></div></div>';
                             currentPage.parentNode.insertBefore(overflowPage, currentPage.nextSibling);
                         }
-                        const overflowContainer = overflowPage.querySelector('#p7Container');
+                        const overflowContainer = overflowPage.querySelector('#p9Container');
                         if (overflowContainer && sec5.parentNode !== overflowContainer) {
                             overflowContainer.appendChild(sec5);
                         }
@@ -703,7 +703,7 @@ function managePagination() {
         let tbody = tables[i];
         if (tbody.rows.length === 0) {
             let page = tbody.closest('.page');
-            if (page && page.id !== 'p5' && page.id !== 'p6') page.remove();
+            if (page && page.id !== 'p8') page.remove();
             continue;
         }
 
@@ -734,7 +734,7 @@ function managePagination() {
 
         if (tbody.rows.length === 0) {
             let pToRemove = tbody.closest('.page');
-            if (pToRemove && pToRemove.id !== 'p5' && pToRemove.id !== 'p6') pToRemove.remove();
+            if (pToRemove && pToRemove.id !== 'p8') pToRemove.remove();
         }
     }
 
@@ -870,15 +870,15 @@ function adjustLayoutForBluPine() {
 
     const sec5 = document.getElementById('section5Wrapper');
     const container = document.getElementById('incidentSectionsContainer');
-    const p6 = document.getElementById('p6');
+    const p8 = document.getElementById('p8');
 
-    if (!sec5 || !container || !p6) return;
+    if (!sec5 || !container || !p8) return;
 
-    // Remove any stale p7 — managePagination will create overflow pages as needed
-    const p7 = document.getElementById('p7');
-    if (p7) p7.remove();
+    // Remove any stale p9 — managePagination will create overflow pages as needed
+    const p9 = document.getElementById('p9');
+    if (p9) p9.remove();
 
-    // Always keep sec5 (Section 6 heading + table) inside container on p6.
+    // Always keep sec5 (Section 6 heading + table) inside container on p8.
     // managePagination() handles pushing overflow rows to a new page automatically.
     if (sec5.parentNode !== container) {
         container.appendChild(sec5);
@@ -1186,8 +1186,6 @@ document.getElementById('incidentCsv').addEventListener('change', function (e) {
                 if (sevContainer) {
                     sevContainer.style.display = 'flex';
                     sevContainer.style.height = 'auto';
-                    const wrap = sevContainer.querySelector('.canvas-wrap');
-                    if (wrap) wrap.style.height = '200px';
                 }
                 renderIncidentChart('sevChart', stats, "Incident Severity");
             } else {
@@ -1203,7 +1201,6 @@ document.getElementById('incidentCsv').addEventListener('change', function (e) {
             if (tpTotal > 0) {
                 if (tpMsg) tpMsg.style.display = 'none';
                 if (tpContainer) { tpContainer.style.display = 'flex'; tpContainer.style.height = 'auto'; }
-                if (tpWrap) { tpWrap.style.display = 'block'; tpWrap.style.height = '160px'; }
                 renderIncidentChart('tpChart', tpData, "True Positive");
             } else {
                 if (tpContainer) tpContainer.style.display = 'none';
@@ -1262,31 +1259,62 @@ function renderIncidentChart(id, counts, label) {
     const ctx = canvas.getContext('2d');
     if (activeCharts[id]) activeCharts[id].destroy();
 
-    const maxCount = Math.max(counts.HIGH, counts.MEDIUM, counts.LOW);
-    const showTitle = id !== 'sevChart';
-
     activeCharts[id] = new Chart(ctx, {
-        type: 'bar',
+        type: 'radar',
         data: {
-            labels: [''],
-            datasets: [
-                { label: 'High', data: [counts.HIGH], backgroundColor: '#FF0000', maxBarThickness: 120 },
-                { label: 'Medium', data: [counts.MEDIUM], backgroundColor: '#FFFF00', maxBarThickness: 120 },
-                { label: 'Low', data: [counts.LOW], backgroundColor: '#00B050', maxBarThickness: 120 }
-            ]
+            labels: ['High', 'Medium', 'Low'],
+            datasets: [{
+                label: label,
+                data: [counts.HIGH, counts.MEDIUM, counts.LOW],
+                backgroundColor: 'rgba(46, 116, 182, 0.18)',
+                borderColor: '#2e74b5',
+                borderWidth: 3,
+                pointBackgroundColor: ['#C00000', '#CC8800', '#00B050'],
+                pointBorderColor: ['#C00000', '#CC8800', '#00B050'],
+                pointRadius: 8,
+                pointHoverRadius: 10
+            }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             devicePixelRatio: SNAPSHOT_RATIO,
-            layout: { padding: 15 },
+            layout: { padding: { top: 30, bottom: 30, left: 50, right: 50 } },
             plugins: {
-                title: { display: showTitle, text: label, font: { size: 16, weight: 'bold' }, color: '#444', padding: { bottom: 10 } },
-                legend: { display: true, position: 'bottom', labels: { boxWidth: 12, padding: 15 } },
-                datalabels: { anchor: 'end', align: 'top', formatter: (v) => v, font: { size: 12, weight: 'bold' }, color: '#555' }
+                title: {
+                    display: true,
+                    text: label,
+                    font: { size: 18, weight: 'bold' },
+                    color: '#1F3864',
+                    padding: { bottom: 16 }
+                },
+                legend: { display: false },
+                datalabels: {
+                    display: true,
+                    formatter: (v) => v > 0 ? v : '',
+                    font: { size: 15, weight: 'bold' },
+                    color: '#333',
+                    offset: 10,
+                    align: 'end',
+                    anchor: 'end'
+                }
             },
             scales: {
-                y: { beginAtZero: true, suggestedMax: maxCount > 0 ? maxCount + 1 : 1, ticks: { stepSize: 1, precision: 0 }, grid: { drawBorder: false } },
-                x: { grid: { display: false } }
+                r: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        precision: 0,
+                        font: { size: 12 },
+                        backdropColor: 'transparent'
+                    },
+                    pointLabels: {
+                        font: { size: 16, weight: 'bold' },
+                        color: ['#C00000', '#CC8800', '#00B050']
+                    },
+                    grid: { color: 'rgba(0,0,0,0.1)' },
+                    angleLines: { color: 'rgba(0,0,0,0.15)' }
+                }
             }
         }
     });
@@ -1357,10 +1385,6 @@ window.onload = () => {
 
     // Set default FP text
     updateFPText(0, null);
-
-    document.querySelectorAll('#sevHalfContainer, #tpHalfContainer').forEach(c => {
-        if (c) c.style.height = 'auto';
-    });
 
     sync();
     updatePageNumbers();

@@ -100,8 +100,8 @@ input {
 }
 
 .cover-title {
-    font-size: 20pt;
-    font-weight: bold;
+    font-size: 24pt;
+    font-weight: 900;
     color: #1a1a2e;
     margin: 0 0 4px 0;
     text-align: center;
@@ -200,9 +200,9 @@ table {
 .doc-control-table td {
     border: none;
     border-bottom: 1px solid #ddd;
-    padding: 7px 6px;
+    padding: 12px 8px;
     text-align: left;
-    font-size: 9pt;
+    font-size: 10.5pt;
 }
 
 .doc-control-table thead th {
