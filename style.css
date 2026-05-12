@@ -1,5 +1,5 @@
 @page {
-    size: A4;
+    size: 338mm 190mm;
     margin: 0;
 }
 
@@ -19,7 +19,7 @@ body {
     background: #fff;
     padding: 20px;
     border-radius: 8px;
-    max-width: 1100px;
+    max-width: 1300px;
     margin: 0 auto 30px auto;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
@@ -50,9 +50,9 @@ input {
 /* ── Page Structure ── */
 .page {
     background: white;
-    width: 210mm;
-    height: 297mm;
-    padding: 15mm 20mm;
+    width: 338mm;
+    height: 190mm;
+    padding: 8mm 14mm;
     margin: 0 auto 20px auto;
     position: relative;
     box-sizing: border-box;
@@ -67,9 +67,9 @@ input {
 /* ── SNS Logo on inner pages (absolute, top-right) ── */
 .page-sns-logo {
     position: absolute;
-    top: 3mm;
-    right: 18mm;
-    height: 12mm;
+    top: 2mm;
+    right: 14mm;
+    height: 7mm;
     width: auto;
     object-fit: contain;
     z-index: 2;
@@ -79,12 +79,12 @@ input {
 .cover-header {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 5mm;
+    margin-bottom: 2mm;
     flex-shrink: 0;
 }
 
 .cover-sns-logo {
-    height: 22mm;
+    height: 13mm;
     width: auto;
     object-fit: contain;
 }
@@ -95,23 +95,23 @@ input {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding-top: 20mm;
+    padding-top: 5mm;
     text-align: center;
 }
 
 .cover-title {
-    font-size: 28pt;
+    font-size: 20pt;
     font-weight: bold;
     color: #1a1a2e;
-    margin: 0 0 6px 0;
+    margin: 0 0 4px 0;
     text-align: center;
     outline: none;
 }
 
 .cover-date-line {
-    font-size: 12pt;
+    font-size: 10pt;
     color: #444;
-    margin: 0 0 18mm 0;
+    margin: 0 0 6mm 0;
     text-align: center;
 }
 
@@ -119,38 +119,38 @@ input {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 45mm;
+    min-height: 22mm;
 }
 
 .cover-cust-logo {
-    max-height: 50mm;
-    max-width: 100mm;
+    max-height: 28mm;
+    max-width: 80mm;
     object-fit: contain;
 }
 
 .cover-copyright {
     margin-top: auto;
-    padding-bottom: 12mm;
+    padding-bottom: 8mm;
     flex-shrink: 0;
 }
 
 .copyright-heading {
-    font-size: 12pt;
-    margin: 0 0 5px 0;
+    font-size: 9.5pt;
+    margin: 0 0 3px 0;
 }
 
 .copyright-text {
-    font-size: 10pt;
-    line-height: 1.5;
+    font-size: 8.5pt;
+    line-height: 1.4;
     margin: 0;
 }
 
 /* ── Section Headers ── */
 .section-header {
-    font-size: 13pt;
+    font-size: 10pt;
     font-weight: bold;
     color: #1F3864;
-    margin-bottom: 8px;
+    margin-bottom: 5px;
     margin-top: 0;
 }
 
@@ -167,8 +167,8 @@ input {
 .toc-item {
     display: flex;
     align-items: baseline;
-    padding: 10px 0;
-    font-size: 12pt;
+    padding: 6px 0;
+    font-size: 10pt;
     text-decoration: none;
     color: #000;
     cursor: pointer;
@@ -200,9 +200,9 @@ table {
 .doc-control-table td {
     border: none;
     border-bottom: 1px solid #ddd;
-    padding: 12px 8px;
+    padding: 7px 6px;
     text-align: left;
-    font-size: 10.5pt;
+    font-size: 9pt;
 }
 
 .doc-control-table thead th {
@@ -215,13 +215,23 @@ table {
     border-bottom: none;
 }
 
+/* ── Side-by-side chart wrapper (landscape PPT layout) ── */
+.chart-body {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    gap: 10px;
+    min-height: 0;
+}
+
 /* ── 50/50 Half-page Layout ── */
 .half-container {
-    height: 46%;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    margin-bottom: 2%;
+    margin-bottom: 0;
     position: relative;
+    min-width: 0;
 }
 
 .box-border {
@@ -343,16 +353,16 @@ table {
     white-space: nowrap;
     overflow: hidden;
     line-height: 1.2;
-    padding: 6px 6px;
-    font-size: 10pt;
+    padding: 4px 5px;
+    font-size: 9pt;
     position: relative;
     text-align: center;
 }
 
 /* Data cells: wrap long text to next line, never overflow */
 .incident-data-table td {
-    font-size: 10pt;
-    padding: 6px 6px;
+    font-size: 9pt;
+    padding: 4px 5px;
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
@@ -400,13 +410,13 @@ table {
 }
 
 h3.incident-section-heading {
-    margin-top: 12px;
-    margin-bottom: 8px;
+    margin-top: 6px;
+    margin-bottom: 5px;
 }
 
 .page.incident-page-extra h3.incident-section-heading--continued {
-    margin-top: 10px;
-    margin-bottom: 8px;
+    margin-top: 6px;
+    margin-bottom: 5px;
 }
 
 .page.incident-note-overflow-page {
@@ -428,7 +438,7 @@ h3.incident-section-heading {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 35px;
+    height: 22px;
     display: flex;
 }
 
@@ -449,12 +459,12 @@ h3.incident-section-heading {
 
 .footer-text-row {
     position: absolute;
-    bottom: 45px;
-    left: 20mm;
-    right: 20mm;
+    bottom: 28px;
+    left: 14mm;
+    right: 14mm;
     display: flex;
     justify-content: space-between;
-    font-size: 9.5pt;
+    font-size: 8pt;
 }
 
 .confidential-mark {
@@ -469,13 +479,13 @@ h3.incident-section-heading {
 /* End-of-document pin */
 .end-doc-pin {
     position: absolute;
-    left: 20mm;
-    right: 20mm;
-    bottom: 88px;
+    left: 14mm;
+    right: 14mm;
+    bottom: 55px;
     width: auto;
     text-align: center;
     font-style: italic;
-    font-size: 11pt;
+    font-size: 9pt;
     margin: 0;
     padding: 2px 0;
     z-index: 1;
