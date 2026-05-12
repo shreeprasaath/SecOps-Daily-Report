@@ -147,11 +147,21 @@ input {
 
 /* ── Section Headers ── */
 .section-header {
-    font-size: 10pt;
+    font-size: 14pt;
     font-weight: bold;
     color: #1F3864;
     margin-bottom: 5px;
     margin-top: 0;
+}
+
+/* Push section header to ~17% from page top on full-page content pages */
+.page > h3.section-header {
+    margin-top: 24mm;
+}
+
+/* Incident section container also gets the same top offset */
+#p8 > #incidentSectionsContainer {
+    padding-top: 24mm;
 }
 
 .toc-heading {
@@ -168,7 +178,7 @@ input {
     display: flex;
     align-items: baseline;
     padding: 6px 0;
-    font-size: 10pt;
+    font-size: 12pt;
     text-decoration: none;
     color: #000;
     cursor: pointer;
@@ -353,16 +363,16 @@ table {
     white-space: nowrap;
     overflow: hidden;
     line-height: 1.2;
-    padding: 4px 5px;
-    font-size: 9pt;
+    padding: 6px 7px;
+    font-size: 10pt;
     position: relative;
     text-align: center;
 }
 
 /* Data cells: wrap long text to next line, never overflow */
 .incident-data-table td {
-    font-size: 9pt;
-    padding: 4px 5px;
+    font-size: 10pt;
+    padding: 6px 7px;
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
@@ -512,6 +522,14 @@ h3.incident-section-heading {
 
 .action-btn.del {
     background: #d9534f;
+}
+
+/* ── Chart solo pages: smaller box, horizontally centered ── */
+.chart-box-solo {
+    flex-grow: 0 !important;
+    height: 110mm;
+    width: 70%;
+    margin: 0 auto;
 }
 
 /* Promote chart canvases to GPU compositor layers — prevents main-thread repaint during scroll */
