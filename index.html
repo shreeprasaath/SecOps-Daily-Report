@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=21">
+    <link rel="stylesheet" href="style.css?v=22">
 </head>
 
 <body>
@@ -96,77 +96,79 @@
         <h3 class="section-header toc-heading">Table of Contents</h3>
         <div class="toc-list">
             <a href="#p4" class="toc-item"><span>1. Daily Average EPS</span><span class="toc-dots"></span><span>4</span></a>
-            <a href="#p4" class="toc-item"><span>2. Reporting Device - Average EPS</span><span class="toc-dots"></span><span>4</span></a>
-            <a href="#p5" class="toc-item"><span>3. Incident Severity Count</span><span class="toc-dots"></span><span>5</span></a>
-            <a href="#p5" class="toc-item"><span>4. False Positive &amp; True Positive</span><span class="toc-dots"></span><span>5</span></a>
-            <a href="#bluPineSectionWrapper" class="toc-item" id="tocBluPineItem" style="display:none;"><span>5. Potential Incidents with Count</span><span class="toc-dots"></span><span id="tocBluPinePage">5</span></a>
-            <a href="#section5Wrapper" class="toc-item" id="tocMainIncidentItem"><span>5. Potential Incidents</span><span class="toc-dots"></span><span id="tocIncidentPage">6</span></a>
+            <a href="#p5" class="toc-item"><span>2. Reporting Device - Average EPS</span><span class="toc-dots"></span><span>5</span></a>
+            <a href="#p6" class="toc-item"><span>3. Incident Severity Count</span><span class="toc-dots"></span><span>6</span></a>
+            <a href="#p7" class="toc-item"><span>4. False Positive &amp; True Positive</span><span class="toc-dots"></span><span>7</span></a>
+            <a href="#bluPineSectionWrapper" class="toc-item" id="tocBluPineItem" style="display:none;"><span>5. Potential Incidents with Count</span><span class="toc-dots"></span><span id="tocBluPinePage">8</span></a>
+            <a href="#section5Wrapper" class="toc-item" id="tocMainIncidentItem"><span>5. Potential Incidents</span><span class="toc-dots"></span><span id="tocIncidentPage">8</span></a>
         </div>
         <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num">3</span></div>
         <div class="footer-strip"><div class="strip-blue"></div><div class="strip-pink"></div></div>
     </div>
 
-    <!-- PAGE 4: CHARTS 1 & 2 -->
+    <!-- PAGE 4: EPS CHART -->
     <div class="page" id="p4">
         <img class="sns-logo-img page-sns-logo" src="" alt="">
-        <div class="chart-body">
-            <div class="half-container">
-                <h3 class="section-header">1. Daily Average EPS</h3>
-                <div class="box-border eps-chart-box">
-                    <div class="canvas-wrap"><canvas id="epsChart"></canvas></div>
-                    <table class="eps-legend-table">
-                        <thead>
-                            <tr><th colspan="2">AVG EPS</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><span class="eps-legend-dot"></span> <span id="epsCustomerLabel">RMZ Corp.</span></td>
-                                <td id="epsValDisplay">82</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="half-container">
-                <h3 class="section-header">2. Reporting Device - Average EPS</h3>
-                <div class="box-border">
-                    <div class="canvas-wrap"><canvas id="deviceChart"></canvas></div>
-                </div>
-            </div>
+        <h3 class="section-header">1. Daily Average EPS</h3>
+        <div class="box-border eps-chart-box">
+            <div class="canvas-wrap"><canvas id="epsChart"></canvas></div>
+            <table class="eps-legend-table">
+                <thead>
+                    <tr><th colspan="2">AVG EPS</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="eps-legend-dot"></span> <span id="epsCustomerLabel">RMZ Corp.</span></td>
+                        <td id="epsValDisplay">82</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num">4</span></div>
         <div class="footer-strip"><div class="strip-blue"></div><div class="strip-pink"></div></div>
     </div>
 
-    <!-- PAGE 5: CHARTS 3 & 4 -->
+    <!-- PAGE 5: DEVICE CHART -->
     <div class="page" id="p5">
         <img class="sns-logo-img page-sns-logo" src="" alt="">
-        <div class="chart-body">
-            <div class="half-container" id="sevHalfContainer">
-                <h3 class="section-header">3. Incident Severity Count</h3>
-                <p id="sevBlankMsg" style="margin-top:8px;font-size:9.5pt;line-height:1.4;display:block;"></p>
-                <div class="box-border" id="sevChartContainer" style="display:none;">
-                    <div class="canvas-wrap"><canvas id="sevChart"></canvas></div>
-                </div>
-            </div>
-            <div class="half-container" id="tpHalfContainer">
-                <h3 class="section-header">4. False Positive &amp; True Positive</h3>
-                <p id="tpBlankMsg" style="margin-top:8px;font-size:9.5pt;line-height:1.4;display:block;"></p>
-                <div class="box-border" id="tpChartContainer" style="display:none;">
-                    <div class="canvas-wrap" id="tpWrap"><canvas id="tpChart"></canvas></div>
-                </div>
-                <div id="fpTextSection" style="margin-top:6px;">
-                    <p id="fpTextHeading" style="font-style:italic;color:#1F6B7A;font-weight:bold;margin:0 0 2px 0;font-size:9.5pt;">False Positive:</p>
-                    <p id="fpTextBody" style="margin:0;font-size:9pt;line-height:1.4;"></p>
-                </div>
-            </div>
+        <h3 class="section-header">2. Reporting Device - Average EPS</h3>
+        <div class="box-border">
+            <div class="canvas-wrap"><canvas id="deviceChart"></canvas></div>
         </div>
         <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num">5</span></div>
         <div class="footer-strip"><div class="strip-blue"></div><div class="strip-pink"></div></div>
     </div>
 
-    <!-- PAGE 6: POTENTIAL INCIDENTS -->
+    <!-- PAGE 6: SEVERITY RADAR CHART -->
     <div class="page" id="p6">
+        <img class="sns-logo-img page-sns-logo" src="" alt="">
+        <h3 class="section-header">3. Incident Severity Count</h3>
+        <p id="sevBlankMsg" style="margin-top:8px;font-size:9.5pt;line-height:1.4;display:block;"></p>
+        <div class="box-border" id="sevChartContainer" style="display:none;">
+            <div class="canvas-wrap"><canvas id="sevChart"></canvas></div>
+        </div>
+        <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num">6</span></div>
+        <div class="footer-strip"><div class="strip-blue"></div><div class="strip-pink"></div></div>
+    </div>
+
+    <!-- PAGE 7: TRUE POSITIVE RADAR CHART -->
+    <div class="page" id="p7">
+        <img class="sns-logo-img page-sns-logo" src="" alt="">
+        <h3 class="section-header">4. False Positive &amp; True Positive</h3>
+        <p id="tpBlankMsg" style="margin-top:8px;font-size:9.5pt;line-height:1.4;display:block;"></p>
+        <div class="box-border" id="tpChartContainer" style="display:none;">
+            <div class="canvas-wrap" id="tpWrap"><canvas id="tpChart"></canvas></div>
+        </div>
+        <div id="fpTextSection" style="margin-top:6px;">
+            <p id="fpTextHeading" style="font-style:italic;color:#1F6B7A;font-weight:bold;margin:0 0 2px 0;font-size:9.5pt;">False Positive:</p>
+            <p id="fpTextBody" style="margin:0;font-size:9pt;line-height:1.4;"></p>
+        </div>
+        <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num">7</span></div>
+        <div class="footer-strip"><div class="strip-blue"></div><div class="strip-pink"></div></div>
+    </div>
+
+    <!-- PAGE 8: POTENTIAL INCIDENTS -->
+    <div class="page" id="p8">
         <img class="sns-logo-img page-sns-logo" src="" alt="">
         <div id="incidentSectionsContainer" style="flex-grow:0;display:flex;flex-direction:column;position:relative;">
 
@@ -217,11 +219,11 @@
                 <p id="incidentStatusNote" contenteditable="true" style="margin-top:15px;font-size:10.5pt;color:#333;line-height:1.5;"></p>
             </div>
         </div>
-        <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num">6</span></div>
+        <div class="footer-text-row"><span class="confidential-mark">Confidential</span><span class="page-num">8</span></div>
         <div class="footer-strip"><div class="strip-blue"></div><div class="strip-pink"></div></div>
     </div>
 
-    <script src="script.js?v=21"></script>
+    <script src="script.js?v=22"></script>
 </body>
 
 </html>
